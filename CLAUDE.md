@@ -6,6 +6,9 @@
 
 - `index.html` — 앱 전체. 마크업, 스타일(`<style>`), 동작(`<script>`)이 한 파일에 들어 있다.
 - `manifest.webmanifest`, `icons/` — 휴대폰 홈 화면에 설치(PWA)할 때 쓰는 이름과 아이콘. `icons/icon.svg`가 원본.
+- `fonts/` — 글씨체를 직접 담아 둔 곳(구글 폰트에 기대지 않음). `fonts/fonts.css`가 `@font-face` 목록이고,
+  글꼴마다 한글을 잘게 나눈 `.woff2` 조각이 들어 있어 쓰는 글자의 조각만 내려받는다. 글꼴마다 `OFL.txt`(라이선스)를 함께 둔다.
+  글꼴을 더하거나 바꾸려면 `tools/fetch-fonts.mjs`의 목록을 고치고 `node tools/fetch-fonts.mjs`를 실행한다.
 - `sw.js` — 서비스 워커. 앱 파일을 캐시해 인터넷 없이도 열리게 하고, 알람 알림을 누르면 앱을 띄운다.
   앱 파일 목록(`SHELL`)이 바뀌면 `CACHE` 이름의 숫자를 올린다.
 - 빌드 과정과 외부 라이브러리가 없다. `index.html`을 브라우저에서 열면 바로 실행된다
