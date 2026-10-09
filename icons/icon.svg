@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full-bleed background so the same art works as a maskable icon; the artwork stays inside the 80% safe circle. -->
+  <rect width="512" height="512" fill="#FFF6F1"/>
+  <rect x="120" y="138" width="272" height="64" rx="32" fill="#FFD5D3"/>
+  <rect x="120" y="224" width="272" height="64" rx="32" fill="#D3E5FF"/>
+  <rect x="120" y="310" width="272" height="64" rx="32" fill="#CFF0D7"/>
+  <circle cx="152" cy="170" r="17" fill="none" stroke="#962B29" stroke-width="7"/>
+  <circle cx="152" cy="256" r="17" fill="none" stroke="#1E4C8E" stroke-width="7"/>
+  <circle cx="152" cy="342" r="17" fill="#1E5A34"/>
+  <path d="M143 342l7 7 12-14" fill="none" stroke="#CFF0D7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="186" y="164" width="150" height="12" rx="6" fill="#962B29" opacity="0.55"/>
+  <rect x="186" y="250" width="120" height="12" rx="6" fill="#1E4C8E" opacity="0.55"/>
+  <rect x="186" y="336" width="136" height="12" rx="6" fill="#1E5A34" opacity="0.35"/>
+  <circle cx="372" cy="138" r="34" fill="#C43A60"/>
+  <path d="M357 139l10 10 19-21" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

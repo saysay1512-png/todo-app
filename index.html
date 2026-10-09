@@ -1,0 +1,2256 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>할 일 수첩</title>
+<meta name="description" content="하루 · 일주일 · 한달로 보는 할 일 목록">
+<meta name="theme-color" content="#FFF6F1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="할 일 수첩">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&family=Gaegu:wght@400;700&family=Hi+Melody&family=Gowun+Dodum&display=swap">
+<script>
+/* Set the skin and light/dark mode before first paint so the page never flashes the wrong look. */
+(function () {
+  var r = document.documentElement, s = 'mallang';
+  try { s = localStorage.getItem('halil.skin') || s; } catch (e) { /* default skin */ }
+  if (['mallang', 'sticker', 'diary', 'jelly', 'night'].indexOf(s) < 0) s = 'mallang';
+  r.setAttribute('data-skin', s);
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  function mode() {
+    var t = r.getAttribute('data-theme');
+    r.setAttribute('data-mode', t === 'dark' || (t !== 'light' && mq.matches) ? 'dark' : 'light');
+  }
+  mode();
+  if (mq.addEventListener) mq.addEventListener('change', mode);
+})();
+</script>
+<style>
+/* Five skins share one layout. A skin is only a set of the variables below, declared on
+   [data-skin] so the picker can preview any skin inside a small tile. Every light block sets
+   every variable; the dark block (selected by data-mode, set in the head script) overrides colours only.
+   Kind colours keep their meaning in every skin: 일상 green, 중요 red, 외출 blue, 기타 purple.
+   --k-* card fill (may be a gradient), --ki-* text on that card, --kd-* solid dot colour. */
+
+/* 1. 말랑 마시멜로: cream paper, pastel cards with a soft bottom lip */
+[data-skin="mallang"] {
+  --paper: #FFF6F1; --paper-img: none; --sheet: #FFFFFF;
+  --ink: #4A3838; --ink-soft: #7E6562; --rule: #F0DAD3;
+  --pen: #C43A60; --on-pen: #FFFFFF; --pen-wash: #FFE3EA; --red: #C7304A;
+  --k-daily: #CFF0D7; --k-important: #FFD5D3; --k-out: #D3E5FF; --k-etc: #E6DBFF;
+  --ki-daily: #1E5A34; --ki-important: #962B29; --ki-out: #1E4C8E; --ki-etc: #4F3598;
+  --kd-daily: #3FAE67; --kd-important: #EE5A63; --kd-out: #4A8FE2; --kd-etc: #9676E0;
+  --card-radius: 22px; --card-border: 0 solid transparent; --card-shadow: 0 4px 0 rgba(217, 150, 140, 0.28); --room: 0 0 4px;
+  --box-radius: 24px; --box-border: 0 solid transparent; --box-shadow: 0 4px 0 rgba(217, 150, 140, 0.22);
+  --font-display: "Jua", "Malgun Gothic", sans-serif; --font-body: "Jua", "Malgun Gothic", sans-serif;
+  --fs: 16px; --display-weight: 400; --body-weight: 400;
+  --act-set: #6E5A5A; --act-del: #C7304A; --on-act: #FFFFFF; --backdrop: rgba(74, 56, 56, 0.4);
+  color-scheme: light;
+}
+[data-mode="dark"][data-skin="mallang"], [data-mode="dark"] [data-skin="mallang"] {
+  --paper: #2A2125; --sheet: #372C31; --ink: #FBEFF0; --ink-soft: #C4AEB2; --rule: #4B3C42;
+  --pen: #FF9DB6; --on-pen: #2A2125; --pen-wash: #4D2E3A; --red: #FF8E9B;
+  --card-shadow: 0 4px 0 rgba(0, 0, 0, 0.35); --box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+  --act-set: #5B4A50; --act-del: #B8324A; --backdrop: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+/* 2. 톡톡 스티커: yellow paper, thick outlines and hard offset shadows */
+[data-skin="sticker"] {
+  --paper: #FFF0A6; --paper-img: none; --sheet: #FFFFFF;
+  --ink: #1B1B1B; --ink-soft: #5A5444; --rule: #1B1B1B;
+  --pen: #FF6FAE; --on-pen: #1B1B1B; --pen-wash: #FFD3E7; --red: #C8233A;
+  --k-daily: #7EE0A0; --k-important: #FF8B8B; --k-out: #80BDFF; --k-etc: #C3A2FF;
+  --ki-daily: #1B1B1B; --ki-important: #1B1B1B; --ki-out: #1B1B1B; --ki-etc: #1B1B1B;
+  --kd-daily: #22B85E; --kd-important: #F04848; --kd-out: #2F8CFF; --kd-etc: #9161FF;
+  --card-radius: 16px; --card-border: 2.5px solid #1B1B1B; --card-shadow: 4px 4px 0 #1B1B1B; --room: 0 5px 5px 0;
+  --box-radius: 18px; --box-border: 2.5px solid #1B1B1B; --box-shadow: 4px 4px 0 #1B1B1B;
+  --font-display: "Do Hyeon", "Malgun Gothic", sans-serif; --font-body: "Do Hyeon", "Malgun Gothic", sans-serif;
+  --fs: 17px; --display-weight: 400; --body-weight: 400;
+  --act-set: #1B1B1B; --act-del: #C8233A; --on-act: #FFFFFF; --backdrop: rgba(27, 27, 27, 0.45);
+  color-scheme: light;
+}
+[data-mode="dark"][data-skin="sticker"], [data-mode="dark"] [data-skin="sticker"] {
+  --paper: #25222D; --sheet: #34303F; --ink: #FFF5CC; --ink-soft: #CFC6A6; --rule: #FFE680;
+  --pen: #FF8CC0; --pen-wash: #4E2C40; --red: #FF8A96;
+  --card-border: 2.5px solid #FFE680; --card-shadow: 4px 4px 0 #FFE680;
+  --box-border: 2.5px solid #FFE680; --box-shadow: 4px 4px 0 #FFE680;
+  --act-set: #4A4558; --act-del: #B5283C; --backdrop: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+/* 3. 일기장: dotted notebook paper, handwriting, sticky notes held by tape */
+[data-skin="diary"] {
+  --paper: #FBF6EC; --paper-img: radial-gradient(circle, #E2D6C0 1px, transparent 1.4px); --sheet: #FFFDF7;
+  --ink: #3E3229; --ink-soft: #7E6D5D; --rule: #E6DBC8;
+  --pen: #B9553F; --on-pen: #FFFFFF; --pen-wash: #F8E2D8; --red: #B23A26;
+  --k-daily: #DCF2C7; --k-important: #FFD1C8; --k-out: #CDE4F6; --k-etc: #E7D9F4;
+  --ki-daily: #2E571D; --ki-important: #8A2C1D; --ki-out: #214E77; --ki-etc: #573983;
+  --kd-daily: #67BA42; --kd-important: #E86650; --kd-out: #4A96D2; --kd-etc: #9C77CE;
+  --card-radius: 6px; --card-border: 0 solid transparent; --card-shadow: 0 2px 0 rgba(62, 50, 41, 0.1), 0 3px 6px rgba(62, 50, 41, 0.08); --room: 9px 3px 6px;
+  --box-radius: 10px; --box-border: 1px solid #E6DBC8; --box-shadow: 0 2px 0 rgba(62, 50, 41, 0.06);
+  --font-display: "Gaegu", "Malgun Gothic", cursive; --font-body: "Gaegu", "Malgun Gothic", cursive;
+  --fs: 19px; --display-weight: 700; --body-weight: 700;
+  --act-set: #5E5044; --act-del: #B23A26; --on-act: #FFFFFF; --backdrop: rgba(62, 50, 41, 0.4);
+  --tape: rgba(255, 255, 255, 0.6);
+  color-scheme: light;
+}
+[data-mode="dark"][data-skin="diary"], [data-mode="dark"] [data-skin="diary"] {
+  --paper: #24201B; --paper-img: radial-gradient(circle, #3D352C 1px, transparent 1.4px); --sheet: #2F2A24;
+  --ink: #F3EADC; --ink-soft: #B9A994; --rule: #4A4136;
+  --pen: #F29A85; --on-pen: #24201B; --pen-wash: #4B3128; --red: #FF9C87;
+  --card-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); --box-border: 1px solid #4A4136; --box-shadow: none;
+  --act-set: #574A3E; --act-del: #A8392A; --backdrop: rgba(0, 0, 0, 0.6);
+  --tape: rgba(255, 255, 255, 0.28);
+  color-scheme: dark;
+}
+
+/* 4. 젤리: lavender paper, glossy candy-coloured cards */
+[data-skin="jelly"] {
+  --paper: #F4EEFF; --paper-img: none; --sheet: #FFFFFF;
+  --ink: #3A2E5C; --ink-soft: #685D8C; --rule: #E2D9F7;
+  --pen: #6B4CF0; --on-pen: #FFFFFF; --pen-wash: #EAE3FF; --red: #D3304B;
+  --k-daily: linear-gradient(165deg, #23A060, #167843); --k-important: linear-gradient(165deg, #E5464E, #B8252E);
+  --k-out: linear-gradient(165deg, #3A80EA, #1D52B8); --k-etc: linear-gradient(165deg, #8565F0, #5531C4);
+  --ki-daily: #FFFFFF; --ki-important: #FFFFFF; --ki-out: #FFFFFF; --ki-etc: #FFFFFF;
+  --kd-daily: #2BAE6C; --kd-important: #EF4D55; --kd-out: #3A86F5; --kd-etc: #8A63F5;
+  --card-radius: 26px; --card-border: 0 solid transparent; --card-shadow: 0 5px 0 rgba(70, 40, 160, 0.16); --room: 0 0 5px;
+  --box-radius: 26px; --box-border: 0 solid transparent; --box-shadow: 0 5px 0 rgba(70, 40, 160, 0.08);
+  --font-display: "Jua", "Malgun Gothic", sans-serif; --font-body: "Jua", "Malgun Gothic", sans-serif;
+  --fs: 16px; --display-weight: 400; --body-weight: 400;
+  --act-set: #4B3F75; --act-del: #D3304B; --on-act: #FFFFFF; --backdrop: rgba(58, 46, 92, 0.4);
+  color-scheme: light;
+}
+[data-mode="dark"][data-skin="jelly"], [data-mode="dark"] [data-skin="jelly"] {
+  --paper: #1C1730; --sheet: #28213F; --ink: #F1ECFF; --ink-soft: #ADA3CC; --rule: #3A3158;
+  --pen: #A58CFF; --on-pen: #1C1730; --pen-wash: #352A5C; --red: #FF8296;
+  --card-shadow: 0 5px 0 rgba(0, 0, 0, 0.35); --box-shadow: 0 5px 0 rgba(0, 0, 0, 0.25);
+  --act-set: #463A6E; --act-del: #B82D45; --backdrop: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+/* 5. 별밤: always night, navy sky with stars, pastel cards like little lanterns */
+[data-skin="night"] {
+  --paper: #141A33;
+  --paper-img: radial-gradient(circle, rgba(255, 255, 255, 0.5) 1px, transparent 1.5px), radial-gradient(circle, rgba(255, 255, 255, 0.28) 1px, transparent 1.5px);
+  --sheet: #1F2748; --ink: #F2F0FF; --ink-soft: #A9AFD9; --rule: #343E6A;
+  --pen: #FFD66B; --on-pen: #141A33; --pen-wash: #3A3756; --red: #FF8E8E;
+  --k-daily: #A9E7C2; --k-important: #FFB6B6; --k-out: #AACDFF; --k-etc: #CEBAFF;
+  --ki-daily: #123D27; --ki-important: #6B1A1A; --ki-out: #14325E; --ki-etc: #33206B;
+  --kd-daily: #6FD69B; --kd-important: #FF8080; --kd-out: #7DB2FF; --kd-etc: #B394FF;
+  --card-radius: 18px; --card-border: 0 solid transparent; --card-shadow: 0 0 14px -4px rgba(255, 214, 107, 0.0); --room: 0;
+  --box-radius: 20px; --box-border: 1px solid #343E6A; --box-shadow: none;
+  --font-display: "Hi Melody", "Malgun Gothic", cursive; --font-body: "Gowun Dodum", "Malgun Gothic", sans-serif;
+  --fs: 16px; --display-weight: 400; --body-weight: 400;
+  --act-set: #39447A; --act-del: #A83A4A; --on-act: #FFFFFF; --backdrop: rgba(5, 8, 20, 0.65);
+  color-scheme: dark;
+}
+
+/* Kind classes pick their colours out of whichever skin is in scope. */
+.k-daily { --k: var(--k-daily); --ki: var(--ki-daily); --kd: var(--kd-daily); }
+.k-important { --k: var(--k-important); --ki: var(--ki-important); --kd: var(--kd-important); }
+.k-out { --k: var(--k-out); --ki: var(--ki-out); --kd: var(--kd-out); }
+.k-etc { --k: var(--k-etc); --ki: var(--ki-etc); --kd: var(--kd-etc); }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image: var(--paper-img);
+  background-size: 18px 18px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--fs);
+  line-height: 1.5;
+  font-weight: var(--body-weight, 400);
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+}
+[data-skin="night"] body, body[data-skin="night"] { background-size: 46px 46px, 71px 71px; background-position: 0 0, 23px 31px; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--pen); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.app {
+  max-width: 36rem;
+  margin-inline: auto;
+  padding-inline: 16px;
+  padding-block: calc(20px + env(safe-area-inset-top, 0px)) 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Top: name, skin button, view tabs */
+.top { display: flex; flex-direction: column; gap: 12px; }
+.top-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.brand { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.125rem; color: var(--ink-soft); }
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  background: var(--sheet);
+  border: var(--box-border);
+  border-radius: 999px;
+  box-shadow: var(--box-shadow);
+}
+.tab {
+  height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 1rem;
+}
+.tab[aria-selected="true"] { background: var(--pen); color: var(--on-pen); font-weight: 700; }
+@media (hover: hover) { .tab:hover:not([aria-selected="true"]) { color: var(--ink); } }
+
+.panel { display: flex; flex-direction: column; gap: 18px; }
+.title-row { display: flex; align-items: center; gap: 6px; }
+h1 {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: clamp(1.75rem, 8vw, 2.5rem);
+  line-height: 1.15;
+}
+.panel-head { display: flex; flex-direction: column; gap: 12px; }
+.btn-quiet, .chip span, button.chip {
+  height: 36px;
+  border: 1.5px solid var(--rule);
+  border-radius: 18px;
+  background: var(--sheet);
+  font-size: 0.875rem;
+  padding: 0 14px;
+}
+.btn-quiet { flex: 0 0 auto; }
+.nav-btn {
+  flex: 0 0 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sheet);
+  color: var(--ink-soft);
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.nav-btn svg { width: 18px; height: 18px; }
+@media (hover: hover) { .nav-btn:hover { color: var(--ink); } }
+
+/* Day: week strip */
+.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.day {
+  min-width: 0;
+  height: 60px;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.day .wd { font-size: 0.75rem; color: var(--ink-soft); }
+.day .dn { font-size: 1.0625rem; }
+.day .dot { width: 5px; height: 5px; border-radius: 50%; }
+.day.has-open .dot { background: var(--ink-soft); }
+.day.is-today .dn { color: var(--pen); }
+.day[aria-pressed="true"] { background: var(--pen); }
+.day[aria-pressed="true"] .wd, .day[aria-pressed="true"] .dn { color: var(--on-pen); }
+.day[aria-pressed="true"].has-open .dot { background: var(--on-pen); }
+@media (hover: hover) { .day:hover:not([aria-pressed="true"]) { background: var(--pen-wash); } }
+
+.tally {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+.tally span { color: var(--ink-soft); }
+.bar { height: 8px; background: var(--rule); border-radius: 4px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--pen); border-radius: 4px; transition: width 0.3s ease; }
+
+/* Entry box */
+.box {
+  background: var(--sheet);
+  border: var(--box-border);
+  border-radius: var(--box-radius);
+  box-shadow: var(--box-shadow);
+}
+.add { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.add-row { display: flex; gap: 8px; }
+.add-row input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  padding: 0 6px;
+  outline: none;
+}
+.add-row input::placeholder { color: var(--ink-soft); }
+.btn-primary {
+  flex: 0 0 auto;
+  height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--pen);
+  color: var(--on-pen);
+  font-weight: 700;
+}
+.opts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.add .opts { border-top: 1px dashed var(--rule); padding-top: 10px; }
+.opt-label { flex: 0 0 2.5rem; font-size: 0.8125rem; color: var(--ink-soft); }
+
+/* Radio-backed chips: the input stays for keyboard and screen readers, the span is what you see. */
+.chip { position: relative; display: inline-flex; cursor: pointer; }
+.chip input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.chip span { display: inline-flex; align-items: center; gap: 6px; background: transparent; user-select: none; }
+.chip input:focus-visible + span { outline: 2px solid var(--pen); outline-offset: 2px; }
+.chip input:checked + span, button.chip[aria-pressed="true"] { background: var(--pen-wash); border-color: var(--pen); color: var(--ink); font-weight: 700; }
+.kind span::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--kd); }
+.kind input:checked + span { background: var(--k); border-color: transparent; color: var(--ki); }
+.kind input:checked + span::before { background: var(--ki); }
+button.chip { display: inline-flex; align-items: center; }
+button.wday { width: 40px; padding: 0; justify-content: center; }
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  background: var(--pen-wash);
+  border-radius: var(--box-radius);
+  padding: 10px 14px;
+  font-size: 0.875rem;
+}
+.notice p { margin: 0; flex: 1 1 14rem; min-width: 0; }
+
+/* Day list: each card sits on top of its action buttons inside a clipped slot.
+   .task padding (--room) leaves space for the skin's shadow or tape so the clip doesn't cut it. */
+.list { display: flex; flex-direction: column; gap: 6px; }
+.task { position: relative; overflow: hidden; padding: var(--room); }
+.slot { position: relative; }
+.card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 60px;
+  padding: 8px 14px 8px 6px;
+  background: var(--k);
+  color: var(--ki);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.22s ease;
+}
+/* data-side says which buttons are uncovered: "end" = right side (slide left), "start" = left side (slide right). */
+.task.is-open[data-side="end"] .card { transform: translateX(-144px); }
+.task.is-open[data-side="start"] .card { transform: translateX(144px); }
+.task.is-dragging .card { transition: none; }
+.check {
+  flex: 0 0 44px;
+  height: 44px;
+  border: 0;
+  padding: 0;
+  background: none;
+  display: grid;
+  place-items: center;
+  color: var(--paper);
+  border-radius: 50%;
+}
+.check:focus-visible { outline-color: var(--ki); }
+.check i {
+  width: 26px;
+  height: 26px;
+  border: 2.5px solid var(--ki);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.check svg { width: 14px; height: 14px; opacity: 0; }
+.is-done .check i { background: var(--ki); transform: scale(1.05); }
+.is-done .check svg { opacity: 1; }
+.body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding-block: 9px; cursor: pointer; }
+.text { line-height: 1.4; overflow-wrap: anywhere; }
+.is-done .text { text-decoration: line-through; text-decoration-thickness: 2px; }
+.task.is-done .card, .witem.is-done { opacity: 0.55; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.8125rem; opacity: 0.85; }
+.tag { border: 1.5px solid currentColor; border-radius: 999px; padding: 0 7px; font-size: 0.75rem; }
+
+.actions, .lactions {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--act-set);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.lactions { justify-content: flex-start; }
+.task[data-side="end"]:is(.is-open, .is-dragging) .actions,
+.task[data-side="start"]:is(.is-open, .is-dragging) .lactions { opacity: 1; pointer-events: auto; }
+.act-set, .act-del { transition: flex-basis 0.12s ease; }
+.task.is-dragging .act-del { transition: none; }
+.task.will-delete .act-set { flex-basis: 0; overflow: hidden; padding: 0; }
+.task.will-delete .actions { background: var(--act-del); }
+.act-alarm[aria-pressed="true"] { background: var(--pen); color: var(--on-pen); }
+.lactions .act + .act { box-shadow: inset 1px 0 rgba(255, 255, 255, 0.18); }
+.act-alarm[aria-pressed="false"] svg .on { display: none; }
+.act-alarm[aria-pressed="true"] svg .off { display: none; }
+.act {
+  flex: 0 0 72px;
+  border: 0;
+  padding: 0;
+  background: var(--act-set);
+  color: var(--on-act);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 0.8125rem;
+}
+.act svg { width: 20px; height: 20px; }
+.act-del { background: var(--act-del); }
+.act:focus-visible { outline: 2px solid var(--on-act); outline-offset: -5px; }
+
+/* Skin touches that layout variables can't express */
+[data-skin="diary"] .card::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 54px;
+  height: 16px;
+  margin-left: -27px;
+  transform: rotate(-3deg);
+  background: var(--tape);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06);
+}
+[data-skin="jelly"] .card::after, .skin-prev[data-skin="jelly"] .pv::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 45%;
+  top: 5px;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.32);
+  pointer-events: none;
+}
+[data-skin="jelly"] .card, [data-skin="jelly"] .witem { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18); }
+[data-skin="jelly"] .is-done .check svg { color: var(--kd); }
+
+.empty { margin: 0; padding: 20px 4px; color: var(--ink-soft); }
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; font-size: 0.8125rem; color: var(--ink-soft); }
+.foot p { margin: 0; }
+
+/* Week */
+.wlist-days { display: flex; flex-direction: column; gap: 12px; }
+.wsec { padding: 6px 12px 12px; }
+.wsec.is-sel { outline: 2px solid var(--pen); outline-offset: 0; }
+.whead {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: none;
+  padding: 6px 2px 8px;
+  text-align: left;
+  border-radius: 10px;
+}
+.wdate { font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.125rem; }
+.wsec.is-weekend .wdate .wdn { color: var(--kd-important); }
+.wbadge { font-size: 0.75rem; background: var(--pen); color: var(--on-pen); border-radius: 999px; padding: 1px 8px; }
+.wcount { margin-left: auto; font-size: 0.8125rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.wcount::after { content: " ›"; }
+.witems { display: flex; flex-direction: column; gap: 6px; }
+.witem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 42px;
+  padding: 2px 12px 2px 2px;
+  background: var(--k);
+  color: var(--ki);
+  border: var(--card-border);
+  border-radius: min(var(--card-radius), 16px);
+  cursor: pointer;
+}
+.witem .check { flex-basis: 38px; height: 38px; }
+.witem .check i { width: 21px; height: 21px; border-width: 2px; }
+.witem .check svg { width: 12px; height: 12px; }
+.witem .text { flex: 1; min-width: 0; font-size: 0.9375rem; }
+.witem .wrep { flex: 0 0 auto; font-size: 0.75rem; opacity: 0.85; }
+.wempty { margin: 0; padding: 0 2px 2px; font-size: 0.875rem; color: var(--ink-soft); }
+
+/* Month */
+.cal { padding: 10px 8px 12px; }
+.cal-wd, .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.cal-wd span { text-align: center; font-size: 0.75rem; color: var(--ink-soft); padding-bottom: 6px; }
+.cal-wd span:nth-child(6) { color: var(--kd-out); }
+.cal-wd span:nth-child(7) { color: var(--kd-important); }
+.mcell {
+  min-width: 0;
+  height: 66px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  padding: 5px 1px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.mcell.is-other { opacity: 0.35; }
+.mnum { width: 26px; height: 26px; line-height: 26px; border-radius: 50%; font-size: 0.875rem; text-align: center; }
+.mcell.is-today .mnum { background: var(--pen); color: var(--on-pen); }
+.mcell.is-sel { background: var(--pen-wash); }
+.mdots { display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: 3px; max-width: 32px; min-height: 7px; }
+.mdot { width: 7px; height: 7px; border-radius: 50%; background: var(--kd); }
+.mdot.is-done { opacity: 0.35; }
+.mmore { font-size: 0.625rem; line-height: 1; color: var(--ink-soft); }
+.mclear { font-size: 0.75rem; line-height: 1; color: var(--pen); }
+@media (hover: hover) { .mcell:hover:not(.is-sel) { background: var(--pen-wash); } }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8125rem; color: var(--ink-soft); margin: 0; padding: 0 4px; list-style: none; }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend li::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--kd); }
+.legend .lg-clear::before { content: "★"; width: auto; height: auto; background: none; color: var(--pen); font-size: 0.75rem; }
+
+/* Sheets (settings, skin picker) */
+.sheet {
+  width: 100%;
+  max-width: 32rem;
+  max-height: calc(100dvh - 24px);
+  margin: auto auto 0;
+  padding: 0;
+  border: var(--box-border);
+  border-radius: var(--box-radius) var(--box-radius) 0 0;
+  background: var(--sheet);
+  color: var(--ink);
+  overflow-y: auto;
+}
+.sheet::backdrop { background: var(--backdrop); }
+@media (min-width: 600px) { .sheet { margin: auto; border-radius: var(--box-radius); } }
+.sheet form, .sheet .sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+}
+.sheet h2 { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.5rem; line-height: 1.25; }
+.field { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.field > label, .field > legend { font-size: 0.8125rem; color: var(--ink-soft); padding: 0; margin-bottom: 8px; }
+.field > label { margin-bottom: 0; }
+.field input[type="time"] {
+  height: 56px;
+  border: 1.5px solid var(--rule);
+  border-radius: 14px;
+  background: var(--paper);
+  padding: 0 12px;
+  font-size: 1.5rem;
+  min-width: 0;
+  max-width: 12rem;
+}
+.field input[type="time"]:focus { outline: none; border-color: var(--pen); }
+.sub { margin: -12px 0 0; color: var(--ink-soft); font-size: 0.9375rem; overflow-wrap: anywhere; }
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.switch {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--rule);
+  padding: 3px;
+  display: flex;
+}
+.switch i { width: 26px; height: 26px; border-radius: 50%; background: var(--sheet); transition: transform 0.15s ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
+.switch[aria-checked="true"] { background: var(--pen); }
+.switch[aria-checked="true"] i { transform: translateX(22px); }
+button.chip:disabled { opacity: 0.35; cursor: default; }
+.perm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: var(--pen-wash); border-radius: 14px; padding: 10px 12px; font-size: 0.875rem; }
+.perm p { margin: 0; flex: 1 1 14rem; }
+
+/* Ringing alarm */
+.ring-body { align-items: center; text-align: center; }
+.ring-time { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); font-size: 3rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.ring-bell { width: 56px; height: 56px; color: var(--pen); animation: ring 0.9s ease-in-out infinite; }
+@keyframes ring { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-14deg); } 40% { transform: rotate(12deg); } 60% { transform: rotate(-8deg); } 80% { transform: rotate(5deg); } }
+.ring-task { margin: 0; padding: 12px 18px; border-radius: var(--card-radius); background: var(--k); color: var(--ki); font-size: 1.125rem; max-width: 100%; overflow-wrap: anywhere; }
+.ring-acts { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.ring-acts button { width: 100%; height: 48px; }
+
+.field input[type="text"] {
+  height: 46px;
+  border: 1.5px solid var(--rule);
+  border-radius: 14px;
+  background: var(--paper);
+  padding: 0 12px;
+  min-width: 0;
+}
+.field input[type="text"]:focus { outline: none; border-color: var(--pen); }
+.row-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.wdays { display: flex; flex-wrap: wrap; gap: 6px; }
+.note { margin: 0; font-size: 0.875rem; color: var(--ink-soft); }
+.sheet-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 4px; }
+.sheet-foot .spacer { flex: 1; }
+.btn-danger { border-color: var(--red) !important; color: var(--red); background: transparent; }
+
+.btn-pref { display: inline-flex; align-items: center; gap: 5px; padding-left: 10px; }
+.btn-pref svg { width: 17px; height: 17px; }
+.pref-sec { display: flex; flex-direction: column; gap: 12px; }
+.pref-head { display: flex; flex-direction: column; gap: 2px; }
+.pref-head h3 { margin: 0; font-size: 1rem; }
+.skin-list { display: flex; flex-direction: column; gap: 10px; }
+.skin-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px;
+  border: 2px solid var(--rule);
+  border-radius: 18px;
+  background: none;
+  text-align: left;
+}
+.skin-opt[aria-checked="true"] { border-color: var(--pen); background: var(--pen-wash); }
+.skin-prev {
+  flex: 0 0 116px;
+  height: 92px;
+  border-radius: 12px;
+  background-color: var(--paper);
+  background-image: var(--paper-img);
+  background-size: 12px 12px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  padding: 9px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow: hidden;
+}
+.pv {
+  position: relative;
+  height: 20px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  background: var(--k);
+  color: var(--ki);
+  border: var(--card-border);
+  border-radius: min(var(--card-radius), 10px);
+  white-space: nowrap;
+}
+.skin-prev[data-skin="sticker"] .pv { box-shadow: 2px 2px 0 var(--ink); }
+.skin-prev[data-skin="jelly"] .pv::after { left: 8px; top: 3px; height: 4px; }
+.skin-txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.skin-name { font-size: 1rem; }
+.skin-desc { font-size: 0.8125rem; color: var(--ink-soft); line-height: 1.4; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  max-width: 34rem;
+  margin-inline: auto;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 16px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9375rem;
+  z-index: 10;
+}
+.toast button {
+  flex: 0 0 auto;
+  border: 0;
+  background: none;
+  color: var(--paper);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 6px 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar span, .check i, .card, .switch i { transition: none; }
+  .ring-bell { animation: none; }
+}
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <header class="top">
+    <div class="top-row">
+      <p class="brand" id="brand">할 일 수첩</p>
+      <button type="button" class="btn-quiet btn-pref" id="prefBtn"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>설정</button>
+    </div>
+    <div class="tabs" role="tablist" aria-label="보기">
+      <button type="button" class="tab" role="tab" id="tab-day" data-view="day" aria-controls="viewDay">날</button>
+      <button type="button" class="tab" role="tab" id="tab-week" data-view="week" aria-controls="viewWeek">일주일</button>
+      <button type="button" class="tab" role="tab" id="tab-month" data-view="month" aria-controls="viewMonth">한달</button>
+    </div>
+  </header>
+
+  <!-- 날 -->
+  <section class="panel" id="viewDay" role="tabpanel" aria-labelledby="tab-day">
+    <div class="panel-head">
+      <div class="title-row">
+        <h1 id="dayTitle">오늘</h1>
+        <button type="button" class="btn-quiet" id="goToday" hidden>오늘로</button>
+      </div>
+      <div class="title-row">
+        <button type="button" class="nav-btn" id="prevWeek" aria-label="지난주"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="days" id="days" style="flex:1;min-width:0"></div>
+        <button type="button" class="nav-btn" id="nextWeek" aria-label="다음 주"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="tally" aria-live="polite"><strong id="dTallyOpen">&nbsp;</strong><span id="dTallyDone"></span></div>
+      <div class="bar" aria-hidden="true"><span id="dBarFill"></span></div>
+    </div>
+
+    <form class="add box" id="addForm" autocomplete="off">
+      <div class="add-row">
+        <label class="sr" for="newText">새 할 일</label>
+        <input id="newText" type="text" placeholder="할 일을 적어 주세요" maxlength="200" enterkeyhint="done">
+        <button type="submit" class="btn-primary">추가</button>
+      </div>
+      <fieldset class="opts" id="addKinds"><legend class="sr">종류</legend><span class="opt-label" aria-hidden="true">종류</span></fieldset>
+      <fieldset class="opts" id="addRepeats"><legend class="sr">반복</legend><span class="opt-label" aria-hidden="true">반복</span></fieldset>
+    </form>
+
+    <div class="notice" id="exampleNotice" hidden>
+      <p>예시로 넣어 둔 일이 있어요. 왼쪽으로 밀어 수정해 본 뒤 지우면 됩니다.</p>
+      <button type="button" class="btn-quiet" id="clearExamples">예시 지우기</button>
+    </div>
+
+    <div class="list" id="list" role="list"></div>
+
+    <footer class="foot">
+      <p id="hint">할 일을 왼쪽으로 밀면 수정·지우기가 나오고, 한 번 더 밀면 바로 지워져요. 오른쪽으로 밀면 알람이 나와요. 못 끝낸 일은 다음 날로 넘어가요.</p>
+      <p>적은 내용은 이 브라우저에 자동으로 저장돼요.</p>
+    </footer>
+  </section>
+
+  <!-- 일주일 -->
+  <section class="panel" id="viewWeek" role="tabpanel" aria-labelledby="tab-week" hidden>
+    <div class="panel-head">
+      <div class="title-row">
+        <button type="button" class="nav-btn" id="wPrev" aria-label="지난주"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <h1 id="weekTitle" style="text-align:center">이번 주</h1>
+        <button type="button" class="nav-btn" id="wNext" aria-label="다음 주"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="tally" aria-live="polite"><strong id="wTallyOpen">&nbsp;</strong><span id="wTallyDone"></span></div>
+      <div class="bar" aria-hidden="true"><span id="wBarFill"></span></div>
+      <button type="button" class="btn-quiet" id="wThisWeek" style="align-self:flex-start" hidden>이번 주로</button>
+    </div>
+    <div class="wlist-days" id="weekList"></div>
+  </section>
+
+  <!-- 한달 -->
+  <section class="panel" id="viewMonth" role="tabpanel" aria-labelledby="tab-month" hidden>
+    <div class="panel-head">
+      <div class="title-row">
+        <button type="button" class="nav-btn" id="mPrev" aria-label="지난달"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <h1 id="monthTitle" style="text-align:center">이번 달</h1>
+        <button type="button" class="nav-btn" id="mNext" aria-label="다음 달"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="tally" aria-live="polite"><strong id="mTallyOpen">&nbsp;</strong><span id="mTallyDone"></span></div>
+      <div class="bar" aria-hidden="true"><span id="mBarFill"></span></div>
+      <button type="button" class="btn-quiet" id="mThisMonth" style="align-self:flex-start" hidden>이번 달로</button>
+    </div>
+    <div class="cal box">
+      <div class="cal-wd" aria-hidden="true"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+    <ul class="legend" aria-label="색 설명">
+      <li class="k-daily">일상</li><li class="k-important">중요</li><li class="k-out">외출</li><li class="k-etc">기타</li><li class="lg-clear">모두 끝낸 날</li>
+    </ul>
+    <p class="foot" style="margin:0">날짜를 누르면 그날 할 일 목록으로 가요.</p>
+  </section>
+</main>
+
+<dialog class="sheet" id="sheet" aria-labelledby="sheetTitle">
+  <form id="sheetForm" autocomplete="off">
+    <h2 id="sheetTitle">할 일 수정</h2>
+    <div class="field">
+      <label for="sText">내용</label>
+      <input id="sText" type="text" maxlength="200" enterkeyhint="done">
+    </div>
+    <fieldset class="field"><legend>종류</legend><div class="row-wrap" id="sKinds"></div></fieldset>
+    <fieldset class="field">
+      <legend>반복</legend>
+      <div class="row-wrap" id="sPresets"></div>
+      <div class="wdays" id="sDays" aria-label="요일 직접 고르기" role="group"></div>
+      <p class="note" id="sNote"></p>
+    </fieldset>
+    <div class="sheet-foot">
+      <button type="button" class="btn-quiet btn-danger" id="sDelete">지우기</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn-quiet" id="sCancel">취소</button>
+      <button type="submit" class="btn-primary">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="sheet" id="prefSheet" aria-labelledby="prefTitle">
+  <div class="sheet-body">
+    <h2 id="prefTitle">설정</h2>
+    <section class="pref-sec" aria-labelledby="skinHead">
+      <div class="pref-head">
+        <h3 id="skinHead">스킨</h3>
+        <p class="note">누르면 바로 바뀌고, 다음에 열 때도 그대로예요.</p>
+      </div>
+      <div class="skin-list" id="skinList" role="radiogroup" aria-labelledby="skinHead"></div>
+    </section>
+    <div class="sheet-foot"><span class="spacer"></span><button type="button" class="btn-primary" id="prefDone">닫기</button></div>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="alarmSheet" aria-labelledby="alarmTitle">
+  <form id="alarmForm" autocomplete="off">
+    <h2 id="alarmTitle">알람 설정</h2>
+    <p class="sub" id="alarmFor"></p>
+    <div class="switch-row">
+      <span id="aOnLabel">알람 켜기</span>
+      <button type="button" class="switch" id="aOn" role="switch" aria-labelledby="aOnLabel" aria-checked="true"><i></i></button>
+    </div>
+    <div class="field">
+      <label for="aTime">시간</label>
+      <input id="aTime" type="time" required>
+      <div class="row-wrap" id="aQuick" role="group" aria-label="자주 쓰는 시간"></div>
+    </div>
+    <fieldset class="field"><legend>미리 알림</legend><div class="row-wrap" id="aBefore"></div></fieldset>
+    <fieldset class="field">
+      <legend>울리는 날</legend>
+      <div id="aDaysWrap">
+        <div class="row-wrap" style="margin-bottom:8px"><button type="button" class="chip" id="aAllDays">할 일 있는 날 모두</button></div>
+        <div class="wdays" id="aDays" role="group" aria-label="요일 고르기"></div>
+      </div>
+      <p class="note" id="aDaysNote"></p>
+    </fieldset>
+    <fieldset class="field">
+      <legend>소리</legend>
+      <div class="row-wrap" id="aSound"></div>
+      <div><button type="button" class="btn-quiet" id="aPreview">들어 보기</button></div>
+    </fieldset>
+    <fieldset class="field"><legend>다시 알림</legend><div class="row-wrap" id="aSnooze"></div></fieldset>
+    <div class="perm" id="aPerm" hidden>
+      <p id="aPermMsg"></p>
+      <button type="button" class="btn-quiet" id="aPermBtn" hidden>알림 허용하기</button>
+    </div>
+    <p class="note">끝낸 일은 울리지 않아요. 이 앱이 브라우저에 열려 있을 때 울려요 (다른 탭을 보고 있어도 돼요).</p>
+    <div class="sheet-foot">
+      <button type="button" class="btn-quiet btn-danger" id="aRemove">알람 지우기</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn-quiet" id="aCancel">취소</button>
+      <button type="submit" class="btn-primary">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="sheet" id="ringSheet" aria-labelledby="ringTime">
+  <div class="sheet-body ring-body">
+    <svg class="ring-bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v3.5L4.5 15.5h15L18 12.5V9a6 6 0 0 0-6-6zM9.5 18.5a2.5 2.5 0 0 0 5 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h2 class="ring-time" id="ringTime"></h2>
+    <p class="note" id="ringWhen"></p>
+    <p class="ring-task" id="ringTask"></p>
+    <div class="ring-acts">
+      <button type="button" class="btn-primary" id="ringDone">끝냈어요</button>
+      <button type="button" class="btn-quiet" id="ringSnooze"></button>
+      <button type="button" class="btn-quiet" id="ringClose">확인</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden>
+  <span id="toastMsg"></span>
+  <button type="button" id="toastAct" hidden></button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const root = document.documentElement;
+  const WD = ['일', '월', '화', '수', '목', '금', '토'];
+  const MON_FIRST = [1, 2, 3, 4, 5, 6, 0];
+  const ICON_CHECK = '<i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>';
+  const ICON_PENCIL = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.8 4.2l3 3L7.5 15.5 4 16l.5-3.5z M11.3 5.7l3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const ICON_TRASH = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4.5h4V6M5.5 6l.8 10h7.4l.8-10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const ICON_BELL = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3a4.8 4.8 0 0 0-4.8 4.8v2.8L4 13h12l-1.2-2.4V7.8A4.8 4.8 0 0 0 10 3zM8 15.5a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path class="off" d="M3.5 3.5l13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path class="on" d="M2.8 6.5a7 7 0 0 1 1.7-3M17.2 6.5a7 7 0 0 0-1.7-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  const ICON_CLOCK = '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 7v3.7l2.4 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const LS_TASKS = 'halil.tasks';
+  const LS_FIRED = 'halil.alarmFired';
+  const LS_VIEW = 'halil.view';
+  const LS_SKIN = 'halil.skin';
+  const ACT_W = 144; // width of the uncovered action buttons, matches .task.is-open .card
+
+  const KINDS = [
+    { key: 'daily', label: '일상' },
+    { key: 'important', label: '중요' },
+    { key: 'out', label: '외출' },
+    { key: 'etc', label: '기타' }
+  ];
+  const KIND_LABEL = Object.fromEntries(KINDS.map((k) => [k.key, k.label]));
+  const KIND_ORDER = { important: 0, out: 1, daily: 2, etc: 3 };
+  const PRESETS = [
+    { key: 'once', label: '이날만', days: [] },
+    { key: 'daily', label: '매일', days: [0, 1, 2, 3, 4, 5, 6] },
+    { key: 'mwf', label: '월·수·금', days: [1, 3, 5] },
+    { key: 'weekend', label: '주말만', days: [0, 6] }
+  ];
+  const SKINS = [
+    { key: 'mallang', name: '말랑 마시멜로', desc: '크림색 바탕에 파스텔 카드. 둥글고 폭신해요.' },
+    { key: 'sticker', name: '톡톡 스티커', desc: '노란 바탕, 굵은 테두리. 스티커를 붙인 것처럼.' },
+    { key: 'diary', name: '일기장', desc: '점 무늬 공책에 손글씨, 테이프로 붙인 메모지.' },
+    { key: 'jelly', name: '젤리', desc: '반짝이는 사탕 색 카드. 진하고 통통해요.' },
+    { key: 'night', name: '별밤', desc: '별이 뜬 밤하늘에 은은한 카드. 늘 어두운 화면.' }
+  ];
+
+  /* ---------- dates ---------- */
+  const pad = (n) => String(n).padStart(2, '0');
+  const ymd = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const parseYmd = (s) => { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+  const addDays = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d); };
+  const dayDiff = (a, b) => Math.round((parseYmd(a) - parseYmd(b)) / 86400000);
+  const weekday = (s) => parseYmd(s).getDay();
+  const mondayOf = (s) => addDays(s, -((weekday(s) + 6) % 7));
+  const isYmd = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  let todayStr = ymd(new Date());
+  let viewDate = todayStr;
+
+  function shortDate(s) {
+    const d = parseYmd(s);
+    return (d.getMonth() + 1) + '월 ' + d.getDate() + '일 (' + WD[d.getDay()] + ')';
+  }
+  function relWord(s) {
+    const n = dayDiff(s, todayStr);
+    return n === 0 ? '오늘' : n === 1 ? '내일' : n === -1 ? '어제' : '';
+  }
+  // "18:30" -> "오후 6:30"
+  function timeLabel(hm) {
+    const p = hm.split(':').map(Number);
+    const h = p[0] % 12 === 0 ? 12 : p[0] % 12;
+    return (p[0] < 12 ? '오전 ' : '오후 ') + h + ':' + pad(p[1]);
+  }
+
+  /* ---------- repeat rules ---------- */
+  const sameDays = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
+  function repeatLabel(days) {
+    if (!days.length) return '';
+    if (days.length === 7) return '매일';
+    if (sameDays(days, [0, 6])) return '주말';
+    if (sameDays(days, [1, 2, 3, 4, 5])) return '평일';
+    return MON_FIRST.filter((d) => days.includes(d)).map((d) => WD[d]).join('·');
+  }
+  function occursOn(t, s) {
+    if (!t.days.length) return t.date === s;
+    return s >= t.date && t.days.includes(weekday(s));
+  }
+  function nextOccurrence(t, from) {
+    for (let i = 0; i < 8; i++) {
+      const s = addDays(from, i);
+      if (occursOn(t, s)) return s;
+    }
+    return '';
+  }
+  const isDone = (t, s) => t.doneOn.includes(s);
+  function carryLabel(t) {
+    if (!t.from || t.days.length) return '';
+    const n = dayDiff(t.date, t.from);
+    return n <= 0 ? '' : n === 1 ? '어제에서 넘어옴' : n + '일째 미루는 중';
+  }
+
+  /* ---------- state ---------- */
+  let tasks = [];
+  let loaded = false;
+  let view = 'day';
+  const rows = new Map();
+
+  try {
+    const v = localStorage.getItem(LS_VIEW);
+    if (v === 'day' || v === 'week' || v === 'month') view = v;
+  } catch (e) { /* storage unavailable */ }
+
+  const byId = (id) => tasks.find((t) => t.id === id);
+  const newId = () => 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  // Accepts the current shape and the older { due, important, done } shape.
+  function normalize(t) {
+    const legacy = !('kind' in t);
+    const date = legacy
+      ? (isYmd(t.due) ? t.due : ymd(new Date(t.createdAt || Date.now())))
+      : (isYmd(t.date) ? t.date : todayStr);
+    const n = {
+      id: t.id,
+      text: String(t.text || ''),
+      kind: legacy ? (t.important ? 'important' : 'daily') : (KIND_LABEL[t.kind] ? t.kind : 'daily'),
+      date,
+      days: legacy ? [] : (Array.isArray(t.days) ? [...new Set(t.days.filter((d) => Number.isInteger(d) && d >= 0 && d < 7))].sort() : []),
+      doneOn: legacy ? (t.done ? [date] : []) : (Array.isArray(t.doneOn) ? t.doneOn.filter(isYmd) : []),
+      createdAt: t.createdAt || Date.now()
+    };
+    if (isYmd(t.from) && !n.days.length) n.from = t.from;
+    const alarm = normAlarm(t.alarm);
+    if (alarm) n.alarm = alarm;
+    if (t.example) n.example = true;
+    return n;
+  }
+  const BEFORE = [0, 5, 10, 30, 60];
+  const SOUNDS = ['ding', 'chime', 'none'];
+  const SNOOZE = [0, 5, 10];
+  function normAlarm(a) {
+    if (!a || typeof a !== 'object' || !/^\d{2}:\d{2}$/.test(a.time)) return null;
+    return {
+      on: !!a.on,
+      time: a.time,
+      before: BEFORE.includes(a.before) ? a.before : 0,
+      days: Array.isArray(a.days) ? [...new Set(a.days.filter((d) => Number.isInteger(d) && d >= 0 && d < 7))].sort() : [],
+      sound: SOUNDS.includes(a.sound) ? a.sound : 'ding',
+      snooze: SNOOZE.includes(a.snooze) ? a.snooze : 5
+    };
+  }
+
+  /* ---------- storage ---------- */
+  function exampleTasks() {
+    const now = Date.now();
+    return [
+      { id: 'ex1', text: '관리비 내기', kind: 'important', date: todayStr, days: [], doneOn: [], createdAt: now - 6, example: true },
+      { id: 'ex2', text: '헬스장 가기', kind: 'out', date: todayStr, days: [1, 3, 5], doneOn: [], createdAt: now - 5, example: true,
+        alarm: { on: true, time: '19:00', before: 10, days: [], sound: 'ding', snooze: 5 } },
+      { id: 'ex3', text: '물 2리터 마시기', kind: 'daily', date: todayStr, days: [0, 1, 2, 3, 4, 5, 6], doneOn: [], createdAt: now - 4, example: true },
+      { id: 'ex4', text: '방 청소하기', kind: 'daily', date: todayStr, days: [0, 6], doneOn: [], createdAt: now - 3, example: true },
+      { id: 'ex5', text: '책 30쪽 읽기', kind: 'etc', date: todayStr, days: [0, 1, 2, 3, 4, 5, 6], doneOn: [todayStr], createdAt: now - 2, example: true },
+      { id: 'ex6', text: '택배 반품 보내기', kind: 'out', date: todayStr, from: addDays(todayStr, -1), days: [], doneOn: [], createdAt: now - 1, example: true }
+    ];
+  }
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(LS_TASKS);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) return arr.filter((t) => t && typeof t.id === 'string').map(normalize);
+      }
+    } catch (e) { /* fall through to examples */ }
+    return exampleTasks();
+  }
+  function saveLocal() {
+    try { localStorage.setItem(LS_TASKS, JSON.stringify(tasks)); } catch (e) { /* kept in memory only */ }
+  }
+  function put(t) {
+    const i = tasks.findIndex((x) => x.id === t.id);
+    if (i >= 0) tasks[i] = t; else tasks.push(t);
+    saveLocal();
+  }
+
+  // One-day tasks left unfinished on a past day move to today. `from` keeps the first day they were meant for.
+  function carryOver() {
+    let moved = 0;
+    tasks = tasks.map((t) => {
+      if (t.days.length || t.date >= todayStr || isDone(t, t.date)) return t;
+      moved++;
+      return Object.assign({}, t, { date: todayStr, from: t.from || t.date });
+    });
+    if (moved) saveLocal();
+    return moved;
+  }
+
+  /* ---------- shared view helpers ---------- */
+  function itemsOn(s) {
+    return tasks.filter((t) => occursOn(t, s)).sort((a, b) => {
+      const ad = isDone(a, s), bd = isDone(b, s);
+      if (ad !== bd) return ad ? 1 : -1;
+      if (a.kind !== b.kind) return KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
+      return a.createdAt - b.createdAt;
+    });
+  }
+  function reconcile(parent, desired) {
+    for (let i = 0; i < desired.length; i++) {
+      if (parent.children[i] !== desired[i]) parent.insertBefore(desired[i], parent.children[i] || null);
+    }
+    while (parent.children.length > desired.length) parent.lastElementChild.remove();
+  }
+  function setKind(el, kind) {
+    const c = 'k-' + kind;
+    if (el._kind === c) return;
+    if (el._kind) el.classList.remove(el._kind);
+    el.classList.add(c);
+    el._kind = c;
+  }
+  function setTally(prefix, total, done, emptyMsg) {
+    $(prefix + 'TallyOpen').textContent = !loaded ? ' ' : !total ? emptyMsg : total === done ? '모두 끝냈어요!' : '남은 일 ' + (total - done) + '개';
+    $(prefix + 'TallyDone').textContent = loaded && total ? total + '개 중 ' + done + '개 완료' : '';
+    $(prefix + 'BarFill').style.width = total ? Math.round((done / total) * 100) + '%' : '0%';
+  }
+  function toggleOn(t, s) {
+    const doneOn = isDone(t, s) ? t.doneOn.filter((x) => x !== s) : t.doneOn.concat(s);
+    put(Object.assign({}, t, { doneOn }));
+  }
+
+  /* ---------- day view ---------- */
+  const list = $('list');
+  const emptyEl = document.createElement('p');
+  emptyEl.className = 'empty';
+
+  function createRow(id) {
+    const row = document.createElement('div');
+    row.className = 'task';
+    row.dataset.id = id;
+    row.setAttribute('role', 'listitem');
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    const check = document.createElement('button');
+    check.type = 'button';
+    check.className = 'check';
+    check.dataset.act = 'toggle';
+    check.setAttribute('role', 'checkbox');
+    check.innerHTML = ICON_CHECK;
+    const body = document.createElement('div');
+    body.className = 'body';
+    body.dataset.act = 'toggle';
+    const text = document.createElement('span');
+    text.className = 'text';
+    const meta = document.createElement('span');
+    meta.className = 'meta';
+    body.append(text, meta);
+    card.append(check, body);
+
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    const set = document.createElement('button');
+    set.type = 'button';
+    set.className = 'act act-set';
+    set.dataset.act = 'settings';
+    set.innerHTML = ICON_PENCIL + '<span>수정</span>';
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'act act-del';
+    del.dataset.act = 'delete';
+    del.innerHTML = ICON_TRASH + '<span>지우기</span>';
+    actions.append(set, del);
+
+    // Left side, uncovered by sliding right: alarm on/off and alarm settings.
+    const lactions = document.createElement('div');
+    lactions.className = 'lactions';
+    const alarm = document.createElement('button');
+    alarm.type = 'button';
+    alarm.className = 'act act-alarm';
+    alarm.dataset.act = 'alarm-toggle';
+    alarm.innerHTML = ICON_BELL + '<span></span>';
+    const alarmSet = document.createElement('button');
+    alarmSet.type = 'button';
+    alarmSet.className = 'act act-set';
+    alarmSet.dataset.act = 'alarm-set';
+    alarmSet.innerHTML = ICON_CLOCK + '<span>알람 설정</span>';
+    lactions.append(alarm, alarmSet);
+
+    slot.append(card, lactions, actions);
+    row.append(slot);
+    row._refs = { card, check, text, meta, set, del, alarm, alarmSet, metaKey: null };
+    rows.set(id, row);
+    return row;
+  }
+  function patchRow(row, t) {
+    const r = row._refs;
+    const done = isDone(t, viewDate);
+    setKind(row, t.kind);
+    row.classList.toggle('is-done', done);
+    r.check.setAttribute('aria-checked', done ? 'true' : 'false');
+    r.check.setAttribute('aria-label', (done ? '완료 취소: ' : '완료 표시: ') + t.text);
+    r.set.setAttribute('aria-label', '수정: ' + t.text);
+    r.del.setAttribute('aria-label', '지우기: ' + t.text);
+    const alarmOn = !!(t.alarm && t.alarm.on);
+    r.alarm.setAttribute('aria-pressed', alarmOn ? 'true' : 'false');
+    r.alarm.setAttribute('aria-label', '알람: ' + t.text);
+    r.alarm.lastChild.textContent = alarmOn ? '알람 켜짐' : '알람 꺼짐';
+    r.alarmSet.setAttribute('aria-label', '알람 설정: ' + t.text);
+    if (r.text.textContent !== t.text) r.text.textContent = t.text;
+    const rep = repeatLabel(t.days);
+    const carry = carryLabel(t);
+    const alarmText = alarmOn ? '⏰ ' + timeLabel(t.alarm.time) : '';
+    const key = t.kind + '|' + rep + '|' + carry + '|' + alarmText + '|' + (t.example ? 1 : 0);
+    if (key !== r.metaKey) {
+      r.metaKey = key;
+      r.meta.textContent = '';
+      const k = document.createElement('span');
+      k.textContent = KIND_LABEL[t.kind] + (rep ? ' · ' + rep + ' 반복' : '');
+      r.meta.appendChild(k);
+      [alarmText, carry, t.example ? '예시' : ''].forEach((label) => {
+        if (!label) return;
+        const g = document.createElement('span');
+        g.className = 'tag';
+        g.textContent = label;
+        r.meta.appendChild(g);
+      });
+    }
+  }
+
+  // week strip: seven buttons made once, patched on every render
+  const dayBtns = [];
+  for (let i = 0; i < 7; i++) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'day';
+    b.innerHTML = '<span class="wd"></span><span class="dn"></span><span class="dot"></span>';
+    b.addEventListener('click', () => goTo(b.dataset.date));
+    dayBtns.push(b);
+    $('days').appendChild(b);
+  }
+  function renderStrip() {
+    const start = mondayOf(viewDate);
+    dayBtns.forEach((b, i) => {
+      const s = addDays(start, i);
+      const d = parseYmd(s);
+      const open = loaded ? tasks.filter((t) => occursOn(t, s) && !isDone(t, s)).length : 0;
+      b.dataset.date = s;
+      b.children[0].textContent = WD[d.getDay()];
+      b.children[1].textContent = d.getDate();
+      b.classList.toggle('is-today', s === todayStr);
+      b.classList.toggle('has-open', open > 0);
+      b.setAttribute('aria-pressed', s === viewDate ? 'true' : 'false');
+      b.setAttribute('aria-label', (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + WD[d.getDay()] + '요일' +
+        (s === todayStr ? ', 오늘' : '') + (open ? ', 남은 일 ' + open + '개' : ''));
+    });
+  }
+
+  function renderDay() {
+    const d = parseYmd(viewDate);
+    const rel = relWord(viewDate);
+    $('dayTitle').textContent = (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + WD[d.getDay()] + '요일';
+    $('brand').textContent = '할 일 수첩' + (rel ? ' · ' + rel : '');
+    $('goToday').hidden = viewDate === todayStr;
+    renderStrip();
+
+    const items = loaded ? itemsOn(viewDate) : [];
+    const doneN = items.filter((t) => isDone(t, viewDate)).length;
+    setTally('d', items.length, doneN, '이날 할 일이 없어요');
+
+    const desired = [];
+    const seen = new Set();
+    if (!loaded) {
+      emptyEl.textContent = '할 일을 불러오는 중이에요.';
+      desired.push(emptyEl);
+    } else {
+      items.forEach((t) => {
+        const row = rows.get(t.id) || createRow(t.id);
+        patchRow(row, t);
+        desired.push(row);
+        seen.add(t.id);
+      });
+      if (!items.length) {
+        emptyEl.textContent = '이날 할 일이 없어요. 위 칸에 적고 추가를 눌러 보세요.';
+        desired.push(emptyEl);
+      }
+    }
+    rows.forEach((row, id) => {
+      if (!seen.has(id)) {
+        rows.delete(id);
+        if (openRow === row) openRow = null;
+      }
+    });
+    reconcile(list, desired);
+
+    $('hint').hidden = !items.length;
+    $('exampleNotice').hidden = !(loaded && tasks.some((t) => t.example));
+  }
+
+  /* ---------- week view ---------- */
+  const weekSecs = [];
+  const wItems = new Map(); // "date|id" -> element
+  for (let i = 0; i < 7; i++) {
+    const sec = document.createElement('section');
+    sec.className = 'wsec box';
+    const head = document.createElement('button');
+    head.type = 'button';
+    head.className = 'whead';
+    head.dataset.act = 'wday';
+    const date = document.createElement('span');
+    date.className = 'wdate';
+    const badge = document.createElement('span');
+    badge.className = 'wbadge';
+    const count = document.createElement('span');
+    count.className = 'wcount';
+    head.append(date, badge, count);
+    const items = document.createElement('div');
+    items.className = 'witems';
+    const empty = document.createElement('p');
+    empty.className = 'wempty';
+    empty.textContent = '할 일 없음';
+    sec.append(head, items);
+    weekSecs.push({ sec, head, date, badge, count, items, empty });
+    $('weekList').appendChild(sec);
+  }
+  function createWItem(s, t) {
+    const el = document.createElement('div');
+    el.className = 'witem';
+    el.dataset.act = 'wtoggle';
+    el.dataset.date = s;
+    el.dataset.id = t.id;
+    const check = document.createElement('button');
+    check.type = 'button';
+    check.className = 'check';
+    check.setAttribute('role', 'checkbox');
+    check.innerHTML = ICON_CHECK;
+    const text = document.createElement('span');
+    text.className = 'text';
+    const rep = document.createElement('span');
+    rep.className = 'wrep';
+    el.append(check, text, rep);
+    el._refs = { check, text, rep };
+    return el;
+  }
+  function renderWeek() {
+    const start = mondayOf(viewDate);
+    const end = addDays(start, 6);
+    const a = parseYmd(start), b = parseYmd(end);
+    $('weekTitle').textContent = (a.getMonth() + 1) + '월 ' + a.getDate() + '일 – ' +
+      (a.getMonth() !== b.getMonth() ? (b.getMonth() + 1) + '월 ' : '') + b.getDate() + '일';
+    $('brand').textContent = '할 일 수첩' + (start === mondayOf(todayStr) ? ' · 이번 주' : '');
+    $('wThisWeek').hidden = start === mondayOf(todayStr);
+
+    let total = 0, doneAll = 0;
+    const seen = new Set();
+    weekSecs.forEach((w, i) => {
+      const s = addDays(start, i);
+      const d = parseYmd(s);
+      const items = loaded ? itemsOn(s) : [];
+      const doneN = items.filter((t) => isDone(t, s)).length;
+      total += items.length;
+      doneAll += doneN;
+      w.head.dataset.date = s;
+      w.date.innerHTML = '';
+      const dn = document.createElement('span');
+      dn.className = 'wdn';
+      dn.textContent = WD[d.getDay()];
+      w.date.append((d.getMonth() + 1) + '월 ' + d.getDate() + '일 ', dn);
+      const rel = relWord(s);
+      w.badge.textContent = rel;
+      w.badge.hidden = !rel;
+      w.count.textContent = items.length ? doneN + '/' + items.length : '';
+      w.head.setAttribute('aria-label', shortDate(s) + (rel ? ', ' + rel : '') + ', ' +
+        (items.length ? items.length + '개 중 ' + doneN + '개 완료' : '할 일 없음') + '. 이날 목록 보기');
+      w.sec.classList.toggle('is-weekend', d.getDay() === 0 || d.getDay() === 6);
+      w.sec.classList.toggle('is-sel', s === todayStr);
+
+      const desired = items.map((t) => {
+        const key = s + '|' + t.id;
+        seen.add(key);
+        let el = wItems.get(key);
+        if (!el) { el = createWItem(s, t); wItems.set(key, el); }
+        const done = isDone(t, s);
+        setKind(el, t.kind);
+        el.classList.toggle('is-done', done);
+        el._refs.check.setAttribute('aria-checked', done ? 'true' : 'false');
+        el._refs.check.setAttribute('aria-label', (done ? '완료 취소: ' : '완료 표시: ') + t.text + ', ' + shortDate(s));
+        if (el._refs.text.textContent !== t.text) el._refs.text.textContent = t.text;
+        const rep = (t.alarm && t.alarm.on ? '⏰ ' + timeLabel(t.alarm.time) + '  ' : '') + (repeatLabel(t.days) || (carryLabel(t) ? '넘어옴' : ''));
+        if (el._refs.rep.textContent !== rep) el._refs.rep.textContent = rep;
+        return el;
+      });
+      reconcile(w.items, desired.length ? desired : [w.empty]);
+    });
+    wItems.forEach((el, key) => { if (!seen.has(key)) wItems.delete(key); });
+    setTally('w', total, doneAll, '이번 주 할 일이 없어요');
+  }
+  $('weekList').addEventListener('click', (e) => {
+    const el = e.target.closest('[data-act]');
+    if (!el) return;
+    if (el.dataset.act === 'wday') { setView('day'); goTo(el.dataset.date, true); return; }
+    const t = byId(el.dataset.id);
+    if (!t) return;
+    toggleOn(t, el.dataset.date);
+    render();
+  });
+  $('wPrev').addEventListener('click', () => { viewDate = addDays(viewDate, -7); render(); });
+  $('wNext').addEventListener('click', () => { viewDate = addDays(viewDate, 7); render(); });
+  $('wThisWeek').addEventListener('click', () => { viewDate = todayStr; render(); });
+
+  /* ---------- month view ---------- */
+  const mCells = [];
+  for (let i = 0; i < 42; i++) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mcell';
+    const num = document.createElement('span');
+    num.className = 'mnum';
+    const dots = document.createElement('span');
+    dots.className = 'mdots';
+    dots.setAttribute('aria-hidden', 'true');
+    b.append(num, dots);
+    b.addEventListener('click', () => { setView('day'); goTo(b.dataset.date, true); });
+    b._refs = { num, dots, key: null };
+    mCells.push(b);
+    $('calGrid').appendChild(b);
+  }
+  function renderMonth() {
+    const d = parseYmd(viewDate);
+    const y = d.getFullYear(), m = d.getMonth();
+    const first = ymd(new Date(y, m, 1));
+    const start = mondayOf(first);
+    const lastDay = new Date(y, m + 1, 0).getDate();
+    const weeks = Math.ceil((dayDiff(first, start) + lastDay) / 7);
+    $('monthTitle').textContent = y + '년 ' + (m + 1) + '월';
+    const t0 = parseYmd(todayStr);
+    const isThis = t0.getFullYear() === y && t0.getMonth() === m;
+    $('brand').textContent = '할 일 수첩' + (isThis ? ' · 이번 달' : '');
+    $('mThisMonth').hidden = isThis;
+
+    let total = 0, doneAll = 0;
+    mCells.forEach((b, i) => {
+      if (i >= weeks * 7) { b.hidden = true; return; }
+      b.hidden = false;
+      const s = addDays(start, i);
+      const cd = parseYmd(s);
+      const inMonth = cd.getMonth() === m;
+      const items = loaded ? itemsOn(s) : [];
+      const doneN = items.filter((t) => isDone(t, s)).length;
+      if (inMonth) { total += items.length; doneAll += doneN; }
+      const clear = items.length > 0 && doneN === items.length;
+      b.dataset.date = s;
+      b.classList.toggle('is-other', !inMonth);
+      b.classList.toggle('is-today', s === todayStr);
+      b.classList.toggle('is-sel', s === viewDate && s !== todayStr);
+      b._refs.num.textContent = cd.getDate();
+      b.setAttribute('aria-label', (cd.getMonth() + 1) + '월 ' + cd.getDate() + '일 ' + WD[cd.getDay()] + '요일' +
+        (s === todayStr ? ', 오늘' : '') + ', ' + (items.length ? items.length + '개 중 ' + doneN + '개 완료' : '할 일 없음'));
+
+      const key = clear ? 'clear' : items.map((t) => t.kind + (isDone(t, s) ? '1' : '0')).join(',');
+      if (key === b._refs.key) return;
+      b._refs.key = key;
+      const dots = b._refs.dots;
+      dots.textContent = '';
+      if (clear) {
+        const star = document.createElement('span');
+        star.className = 'mclear';
+        star.textContent = '★';
+        dots.appendChild(star);
+        return;
+      }
+      items.slice(0, 6).forEach((t) => {
+        const dot = document.createElement('span');
+        dot.className = 'mdot k-' + t.kind + (isDone(t, s) ? ' is-done' : '');
+        dots.appendChild(dot);
+      });
+      if (items.length > 6) {
+        const more = document.createElement('span');
+        more.className = 'mmore';
+        more.textContent = '+' + (items.length - 6);
+        dots.appendChild(more);
+      }
+    });
+    setTally('m', total, doneAll, '이번 달 할 일이 없어요');
+  }
+  function shiftMonth(n) {
+    const d = parseYmd(viewDate);
+    const target = new Date(d.getFullYear(), d.getMonth() + n, 1);
+    const t0 = parseYmd(todayStr);
+    viewDate = (target.getFullYear() === t0.getFullYear() && target.getMonth() === t0.getMonth()) ? todayStr : ymd(target);
+    render();
+  }
+  $('mPrev').addEventListener('click', () => shiftMonth(-1));
+  $('mNext').addEventListener('click', () => shiftMonth(1));
+  $('mThisMonth').addEventListener('click', () => { viewDate = todayStr; render(); });
+
+  /* ---------- render ---------- */
+  function syncToday() {
+    const nowStr = ymd(new Date());
+    if (nowStr === todayStr) return;
+    if (viewDate === todayStr) viewDate = nowStr;
+    todayStr = nowStr;
+    const moved = carryOver();
+    if (moved) toast('못 끝낸 일 ' + moved + '개를 오늘로 옮겼어요.');
+  }
+  function render() {
+    syncToday();
+    document.querySelectorAll('.tab').forEach((tab) => {
+      tab.setAttribute('aria-selected', tab.dataset.view === view ? 'true' : 'false');
+      tab.tabIndex = tab.dataset.view === view ? 0 : -1;
+    });
+    $('viewDay').hidden = view !== 'day';
+    $('viewWeek').hidden = view !== 'week';
+    $('viewMonth').hidden = view !== 'month';
+    if (view === 'day') renderDay();
+    else if (view === 'week') renderWeek();
+    else renderMonth();
+  }
+  function setView(v) {
+    if (v === view) return;
+    closeOpenRow();
+    view = v;
+    try { localStorage.setItem(LS_VIEW, v); } catch (e) { /* not remembered */ }
+  }
+  function goTo(s, force) {
+    if (!s || (s === viewDate && !force)) return;
+    closeOpenRow();
+    viewDate = s;
+    render();
+  }
+  document.querySelectorAll('.tab').forEach((tab) => {
+    tab.addEventListener('click', () => { setView(tab.dataset.view); render(); });
+    tab.addEventListener('keydown', (e) => {
+      const order = ['day', 'week', 'month'];
+      const i = order.indexOf(view);
+      const n = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!n) return;
+      e.preventDefault();
+      setView(order[(i + n + 3) % 3]);
+      render();
+      $('tab-' + view).focus();
+    });
+  });
+  $('prevWeek').addEventListener('click', () => goTo(addDays(viewDate, -7)));
+  $('nextWeek').addEventListener('click', () => goTo(addDays(viewDate, 7)));
+  $('goToday').addEventListener('click', () => goTo(todayStr));
+
+  /* ---------- toast ---------- */
+  let toastTimer = 0;
+  let toastAction = null;
+  function toast(msg, actLabel, act) {
+    clearTimeout(toastTimer);
+    $('toastMsg').textContent = msg;
+    toastAction = act || null;
+    $('toastAct').hidden = !act;
+    $('toastAct').textContent = actLabel || '';
+    $('toast').hidden = false;
+    toastTimer = setTimeout(() => { $('toast').hidden = true; toastAction = null; }, act ? 6000 : 4000);
+  }
+  $('toastAct').addEventListener('click', () => {
+    const fn = toastAction;
+    clearTimeout(toastTimer);
+    $('toast').hidden = true;
+    toastAction = null;
+    if (fn) fn();
+  });
+
+  /* ---------- swipe to uncover actions ---------- */
+  let openRow = null;
+  let drag = null;
+  function openRowEl(row, side) {
+    if (openRow && openRow !== row) openRow.classList.remove('is-open');
+    row.dataset.side = side;
+    row.classList.add('is-open');
+    openRow = row;
+  }
+  function closeOpenRow() {
+    if (openRow) openRow.classList.remove('is-open');
+    openRow = null;
+  }
+
+  list.addEventListener('pointerdown', (e) => {
+    const card = e.target.closest('.card');
+    if (!card || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const row = card.closest('.task');
+    drag = {
+      row, card, pid: e.pointerId, x0: e.clientX, y0: e.clientY,
+      base: !row.classList.contains('is-open') ? 0 : row.dataset.side === 'start' ? ACT_W : -ACT_W, x: 0, active: false,
+      willDelete: false
+    };
+    // Already slid open to 수정·지우기? Then sliding on past this point deletes, like a full swipe on a phone.
+    drag.canDelete = drag.base === -ACT_W;
+    drag.delAt = Math.max(ACT_W + 70, card.offsetWidth * 0.6);
+  });
+  list.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    const dx = e.clientX - drag.x0;
+    const dy = e.clientY - drag.y0;
+    if (!drag.active) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dy) > Math.abs(dx)) { drag = null; return; } // vertical: let the page scroll
+      drag.active = true;
+      try { drag.card.setPointerCapture(e.pointerId); } catch (err) { /* already released */ }
+      if (openRow && openRow !== drag.row) closeOpenRow();
+      drag.row.classList.add('is-dragging');
+    }
+    const far = drag.canDelete ? -drag.card.offsetWidth : -ACT_W - 32;
+    drag.x = Math.min(ACT_W + 32, Math.max(far, drag.base + dx));
+    if (drag.x) drag.row.dataset.side = drag.x < 0 ? 'end' : 'start';
+    drag.card.style.transform = 'translateX(' + drag.x + 'px)';
+    if (drag.canDelete) {
+      // The 지우기 button stretches with the finger, then takes the whole strip once letting go would delete.
+      drag.willDelete = -drag.x >= drag.delAt;
+      drag.row.classList.toggle('will-delete', drag.willDelete);
+      drag.row._refs.del.style.flexBasis = (drag.willDelete ? -drag.x : Math.max(72, -drag.x - 72)) + 'px';
+    }
+  });
+  function endDrag(e) {
+    if (!drag || e.pointerId !== drag.pid) return;
+    const d = drag;
+    drag = null;
+    if (!d.active) return;
+    d.row._swipedAt = Date.now();
+    if (d.willDelete && e.type !== 'pointercancel') {
+      const id = d.row.dataset.id;
+      d.card.style.transition = 'transform 0.18s ease';
+      d.card.style.transform = 'translateX(-110%)';
+      setTimeout(() => {
+        resetSwipe(d);
+        closeOpenRow();
+        removeTask(id);
+      }, 180);
+      return;
+    }
+    resetSwipe(d);
+    if (e.type !== 'pointercancel' && d.x < -ACT_W / 2) openRowEl(d.row, 'end');
+    else if (e.type !== 'pointercancel' && d.x > ACT_W / 2) openRowEl(d.row, 'start');
+    else if (openRow === d.row) closeOpenRow();
+  }
+  function resetSwipe(d) {
+    d.row.classList.remove('is-dragging', 'will-delete');
+    d.card.style.transform = '';
+    d.card.style.transition = '';
+    d.row._refs.del.style.flexBasis = '';
+  }
+  list.addEventListener('pointerup', endDrag);
+  list.addEventListener('pointercancel', endDrag);
+
+  // A press anywhere outside the open row slides it back.
+  document.addEventListener('pointerdown', (e) => {
+    if (openRow && !openRow.contains(e.target)) closeOpenRow();
+  }, true);
+  // Keyboard: tabbing onto a hidden action button uncovers it; tabbing away covers it again.
+  list.addEventListener('focusin', (e) => {
+    const row = e.target.closest('.task');
+    if (!row) return;
+    if (e.target.closest('.actions')) openRowEl(row, 'end');
+    else if (e.target.closest('.lactions')) openRowEl(row, 'start');
+    else if (openRow === row && e.target.matches(':focus-visible')) closeOpenRow();
+  });
+  list.addEventListener('focusout', (e) => {
+    if (openRow && !(e.relatedTarget && openRow.contains(e.relatedTarget)) && !drag) {
+      const row = openRow;
+      setTimeout(() => { if (openRow === row && !row.contains(document.activeElement) && !sheet.open && !alarmSheet.open) closeOpenRow(); }, 0);
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && openRow && !sheet.open && !alarmSheet.open) closeOpenRow();
+  });
+
+  /* ---------- day actions ---------- */
+  function removeTask(id) {
+    const t = byId(id);
+    if (!t) return;
+    tasks = tasks.filter((x) => x.id !== id);
+    saveLocal();
+    render();
+    toast(t.days.length ? '반복하는 일을 지웠어요.' : '지웠어요.', '되돌리기', () => { put(Object.assign({}, t)); render(); });
+  }
+
+  list.addEventListener('click', (e) => {
+    const row = e.target.closest('.task');
+    if (!row) return;
+    if (Date.now() - (row._swipedAt || 0) < 350) return; // the click that ends a swipe
+    if (e.target.closest('.card') && row.classList.contains('is-open')) { closeOpenRow(); return; }
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const t = byId(row.dataset.id);
+    if (!t) return;
+    const act = btn.dataset.act;
+    if (act === 'toggle') {
+      toggleOn(t, viewDate);
+      render();
+    } else if (act === 'settings') {
+      openSheet(t.id);
+    } else if (act === 'delete') {
+      closeOpenRow();
+      removeTask(t.id);
+    } else if (act === 'alarm-toggle') {
+      toggleAlarm(t);
+    } else if (act === 'alarm-set') {
+      openAlarmSheet(t.id);
+    }
+  });
+
+  /* ---------- radio chips ---------- */
+  function radioChip(name, value, label, extraClass, checked) {
+    const wrap = document.createElement('label');
+    wrap.className = 'chip' + (extraClass ? ' ' + extraClass : '');
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = name;
+    input.value = value;
+    input.checked = !!checked;
+    const span = document.createElement('span');
+    span.textContent = label;
+    wrap.append(input, span);
+    return wrap;
+  }
+  const checkedValue = (name) => { const el = document.querySelector('input[name="' + name + '"]:checked'); return el ? el.value : ''; };
+  const setChecked = (name, value) => {
+    document.querySelectorAll('input[name="' + name + '"]').forEach((el) => { el.checked = el.value === value; });
+  };
+
+  KINDS.forEach((k, i) => $('addKinds').appendChild(radioChip('aKind', k.key, k.label, 'kind k-' + k.key, i === 0)));
+  PRESETS.forEach((p, i) => $('addRepeats').appendChild(radioChip('aRep', p.key, p.label, '', i === 0)));
+
+  /* ---------- add ---------- */
+  $('addForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = $('newText');
+    const text = input.value.trim();
+    if (!text) { input.focus(); return; }
+    const preset = PRESETS.find((p) => p.key === checkedValue('aRep')) || PRESETS[0];
+    const t = {
+      id: newId(), text, kind: checkedValue('aKind') || 'daily', date: viewDate,
+      days: preset.days.slice(), doneOn: [], createdAt: Date.now()
+    };
+    put(t);
+    if (!occursOn(t, viewDate)) {
+      const next = nextOccurrence(t, viewDate);
+      toast(preset.label + ' 반복이라 ' + shortDate(next) + '부터 보여요.');
+    }
+    input.value = '';
+    setChecked('aRep', 'once');
+    render();
+    input.focus();
+  });
+
+  /* ---------- settings sheet ---------- */
+  const sheet = $('sheet');
+  let sheetId = null;
+  let sDays = [];
+  KINDS.forEach((k) => $('sKinds').appendChild(radioChip('sKind', k.key, k.label, 'kind k-' + k.key, false)));
+  const presetBtns = PRESETS.map((p) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.textContent = p.label;
+    b.addEventListener('click', () => { sDays = p.days.slice(); syncSheet(); });
+    $('sPresets').appendChild(b);
+    return b;
+  });
+  const dayToggles = MON_FIRST.map((wd) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip wday';
+    b.textContent = WD[wd];
+    b.setAttribute('aria-label', WD[wd] + '요일');
+    b.addEventListener('click', () => {
+      sDays = sDays.includes(wd) ? sDays.filter((x) => x !== wd) : sDays.concat(wd).sort();
+      syncSheet();
+    });
+    $('sDays').appendChild(b);
+    return { b, wd };
+  });
+  function syncSheet() {
+    PRESETS.forEach((p, i) => presetBtns[i].setAttribute('aria-pressed', sameDays(p.days, sDays) ? 'true' : 'false'));
+    dayToggles.forEach(({ b, wd }) => b.setAttribute('aria-pressed', sDays.includes(wd) ? 'true' : 'false'));
+    const rep = repeatLabel(sDays);
+    $('sNote').textContent = !rep ? shortDate(viewDate) + ' 하루만 보여요. 못 끝내면 다음 날로 넘어가요.'
+      : rep === '매일' ? '매일 보여요.' : rep + '마다 보여요.';
+  }
+  function openSheet(id) {
+    const t = byId(id);
+    if (!t) return;
+    sheetId = id;
+    $('sText').value = t.text;
+    setChecked('sKind', t.kind);
+    sDays = t.days.slice();
+    syncSheet();
+    closeOpenRow();
+    sheet.showModal();
+  }
+  function closeSheet() {
+    sheetId = null;
+    if (sheet.open) sheet.close();
+  }
+  $('sheetForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const t = byId(sheetId);
+    const text = $('sText').value.trim();
+    if (!text) { $('sText').focus(); return; }
+    if (t) {
+      const n = Object.assign({}, t, { text, kind: checkedValue('sKind') || t.kind, days: sDays.slice() });
+      // Turning a repeating task into a one-day task pins it to the day being looked at.
+      if (!n.days.length && t.days.length) n.date = viewDate;
+      if (n.days.length) delete n.from;
+      // Alarm weekdays only make sense inside the task's own repeat days.
+      if (n.alarm) n.alarm = Object.assign({}, n.alarm, { days: n.alarm.days.filter((d) => n.days.includes(d)) });
+      if (text !== t.text) delete n.example;
+      put(n);
+      if (!occursOn(n, viewDate)) {
+        const next = nextOccurrence(n, addDays(viewDate, 1));
+        if (next) toast('이날은 반복하는 요일이 아니라서 ' + shortDate(next) + '에 보여요.');
+      }
+    }
+    closeSheet();
+    render();
+  });
+  $('sCancel').addEventListener('click', closeSheet);
+  $('sDelete').addEventListener('click', () => {
+    const id = sheetId;
+    closeSheet();
+    removeTask(id);
+  });
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); }); // backdrop
+  sheet.addEventListener('close', () => { sheetId = null; });
+
+  /* ---------- alarms: settings sheet ---------- */
+  const alarmSheet = $('alarmSheet');
+  const QUICK_TIMES = [['아침', '08:00'], ['점심', '12:00'], ['저녁', '18:00'], ['밤', '21:00']];
+  const BEFORE_LABEL = { 0: '정시에', 5: '5분 전', 10: '10분 전', 30: '30분 전', 60: '1시간 전' };
+  const SOUND_LABEL = { ding: '딩동', chime: '뾰로롱', none: '소리 없이' };
+  const SNOOZE_LABEL = { 0: '안 함', 5: '5분 뒤', 10: '10분 뒤' };
+  let alarmId = null;
+  let aDraft = { on: true, days: [] };
+
+  BEFORE.forEach((m) => $('aBefore').appendChild(radioChip('aBefore', String(m), BEFORE_LABEL[m], '', m === 0)));
+  SOUNDS.forEach((k) => $('aSound').appendChild(radioChip('aSnd', k, SOUND_LABEL[k], '', k === 'ding')));
+  SNOOZE.forEach((m) => $('aSnooze').appendChild(radioChip('aSnz', String(m), SNOOZE_LABEL[m], '', m === 5)));
+  const quickBtns = QUICK_TIMES.map(([label, hm]) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.textContent = label + ' ' + timeLabel(hm).split(' ')[1];
+    b.setAttribute('aria-label', label + ' ' + timeLabel(hm));
+    b.addEventListener('click', () => { $('aTime').value = hm; syncAlarmSheet(); });
+    $('aQuick').appendChild(b);
+    return { b, hm };
+  });
+  const aDayToggles = MON_FIRST.map((wd) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip wday';
+    b.textContent = WD[wd];
+    b.setAttribute('aria-label', WD[wd] + '요일');
+    b.addEventListener('click', () => {
+      aDraft.days = aDraft.days.includes(wd) ? aDraft.days.filter((x) => x !== wd) : aDraft.days.concat(wd).sort();
+      syncAlarmSheet();
+    });
+    $('aDays').appendChild(b);
+    return { b, wd };
+  });
+  $('aAllDays').addEventListener('click', () => { aDraft.days = []; syncAlarmSheet(); });
+  $('aOn').addEventListener('click', () => { aDraft.on = !aDraft.on; syncAlarmSheet(); });
+  $('aTime').addEventListener('input', syncAlarmSheet);
+
+  const permState = () => ('Notification' in window ? Notification.permission : 'unsupported');
+  function askPermission() {
+    if (permState() !== 'default') return;
+    try {
+      const p = Notification.requestPermission(syncAlarmSheet);
+      if (p && p.then) p.then(syncAlarmSheet, () => {});
+    } catch (e) { /* old browsers */ }
+  }
+  $('aPermBtn').addEventListener('click', askPermission);
+
+  function syncAlarmSheet() {
+    const t = byId(alarmId);
+    if (!t) return;
+    $('aOn').setAttribute('aria-checked', aDraft.on ? 'true' : 'false');
+    quickBtns.forEach(({ b, hm }) => b.setAttribute('aria-pressed', $('aTime').value === hm ? 'true' : 'false'));
+    if (!t.days.length) {
+      $('aDaysWrap').hidden = true;
+      $('aDaysNote').textContent = shortDate(t.date) + ' 하루만 울려요. 못 끝내서 다음 날로 넘어가면 그날 다시 울려요.';
+    } else {
+      $('aDaysWrap').hidden = false;
+      $('aAllDays').setAttribute('aria-pressed', aDraft.days.length ? 'false' : 'true');
+      aDayToggles.forEach(({ b, wd }) => {
+        b.disabled = !t.days.includes(wd);
+        b.setAttribute('aria-pressed', aDraft.days.includes(wd) ? 'true' : 'false');
+      });
+      $('aDaysNote').textContent = aDraft.days.length
+        ? repeatLabel(aDraft.days) + '에만 울려요.'
+        : '할 일이 있는 날(' + repeatLabel(t.days) + ')마다 울려요. 일부 요일만 고를 수도 있어요.';
+    }
+    const ps = permState();
+    $('aPerm').hidden = ps === 'granted';
+    $('aPermBtn').hidden = ps !== 'default';
+    $('aPermMsg').textContent = ps === 'default' ? '화면 밖에서도 알림 창으로 받으려면 알림을 허용해 주세요.'
+      : ps === 'denied' ? '브라우저에서 알림이 막혀 있어요. 앱 화면 안에서만 울려요.'
+      : '이 브라우저는 알림 창을 지원하지 않아요. 앱 화면 안에서만 울려요.';
+  }
+  function defaultTime() {
+    const h = Math.min(new Date().getHours() + 1, 23);
+    return pad(h) + ':00';
+  }
+  function openAlarmSheet(id) {
+    const t = byId(id);
+    if (!t) return;
+    alarmId = id;
+    const a = t.alarm || { on: true, time: defaultTime(), before: 0, days: [], sound: 'ding', snooze: 5 };
+    aDraft = { on: t.alarm ? a.on : true, days: a.days.slice() };
+    $('alarmFor').textContent = t.text;
+    $('aTime').value = a.time;
+    setChecked('aBefore', String(a.before));
+    setChecked('aSnd', a.sound);
+    setChecked('aSnz', String(a.snooze));
+    $('aRemove').hidden = !t.alarm;
+    syncAlarmSheet();
+    closeOpenRow();
+    alarmSheet.showModal();
+  }
+  function closeAlarmSheet() {
+    alarmId = null;
+    if (alarmSheet.open) alarmSheet.close();
+  }
+  function saveAlarm(t, alarm) {
+    const n = Object.assign({}, t);
+    if (alarm) n.alarm = alarm; else delete n.alarm;
+    put(n);
+    skipPastRings(n);
+    return n;
+  }
+  $('alarmForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const t = byId(alarmId);
+    const time = $('aTime').value;
+    if (!/^\d{2}:\d{2}$/.test(time)) { $('aTime').focus(); return; }
+    if (t) {
+      const n = saveAlarm(t, normAlarm({
+        on: aDraft.on, time, days: aDraft.days.filter((d) => t.days.includes(d)),
+        before: Number(checkedValue('aBefore')), sound: checkedValue('aSnd'), snooze: Number(checkedValue('aSnz'))
+      }));
+      if (aDraft.on) askPermission();
+      const when = nextRingText(n);
+      toast(!aDraft.on ? '알람을 저장했어요. 지금은 꺼져 있어요.' : when ? '알람을 맞췄어요. ' + when : '알람을 맞췄어요.');
+    }
+    closeAlarmSheet();
+    render();
+  });
+  $('aCancel').addEventListener('click', closeAlarmSheet);
+  $('aRemove').addEventListener('click', () => {
+    const t = byId(alarmId);
+    closeAlarmSheet();
+    if (!t) return;
+    saveAlarm(t, null);
+    render();
+    toast('알람을 지웠어요.', '되돌리기', () => { put(Object.assign({}, t)); skipPastRings(t); render(); });
+  });
+  $('aPreview').addEventListener('click', () => playOnce(checkedValue('aSnd')));
+  alarmSheet.addEventListener('click', (e) => { if (e.target === alarmSheet) closeAlarmSheet(); });
+  alarmSheet.addEventListener('close', () => { alarmId = null; });
+
+  function toggleAlarm(t) {
+    if (!t.alarm) { openAlarmSheet(t.id); return; } // nothing set yet: start from the settings
+    const on = !t.alarm.on;
+    const n = saveAlarm(t, Object.assign({}, t.alarm, { on }));
+    if (on) askPermission();
+    render();
+    const when = nextRingText(n);
+    toast(on ? '알람을 켰어요.' + (when ? ' ' + when : '') : '알람을 껐어요.');
+  }
+
+  /* ---------- alarms: when to ring ---------- */
+  // Moment the alarm for task t on day s should ring (ms), or null if it doesn't ring that day.
+  function ringAt(t, s) {
+    const a = t.alarm;
+    if (!a || !a.on || !occursOn(t, s)) return null;
+    if (t.days.length && a.days.length && !a.days.includes(weekday(s))) return null;
+    const p = a.time.split(':').map(Number);
+    const d = parseYmd(s);
+    d.setHours(p[0], p[1] - a.before, 0, 0);
+    return d.getTime();
+  }
+  function nextRing(t) {
+    const now = Date.now();
+    for (let i = -1; i < 9; i++) {
+      const s = addDays(todayStr, i);
+      const at = ringAt(t, s);
+      if (at !== null && at > now && !isDone(t, s)) return { s, at };
+    }
+    return null;
+  }
+  function nextRingText(t) {
+    const r = nextRing(t);
+    if (!r) return '';
+    const d = new Date(r.at);
+    const day = ymd(d);
+    return (relWord(day) || shortDate(day)) + ' ' + timeLabel(pad(d.getHours()) + ':' + pad(d.getMinutes())) + '에 울려요.';
+  }
+
+  const RING_WINDOW = 15 * 60000; // a missed alarm still rings if the app comes back within 15 minutes
+  let fired = {};
+  try { fired = JSON.parse(localStorage.getItem(LS_FIRED)) || {}; } catch (e) { fired = {}; }
+  function markFired(key) {
+    const now = Date.now();
+    fired[key] = now;
+    Object.keys(fired).forEach((k) => { if (now - fired[k] > 3 * 86400000) delete fired[k]; });
+    try { localStorage.setItem(LS_FIRED, JSON.stringify(fired)); } catch (e) { /* memory only */ }
+  }
+  // Setting an alarm for a time that just passed shouldn't ring at once.
+  function skipPastRings(t) {
+    const now = Date.now();
+    [-1, 0, 1].forEach((i) => {
+      const s = addDays(todayStr, i);
+      const at = ringAt(t, s);
+      if (at !== null && at <= now) markFired(t.id + '|' + s);
+    });
+  }
+  const snoozes = []; // { id, s, at }
+  function checkAlarms() {
+    if (!loaded) return;
+    const now = Date.now();
+    tasks.forEach((t) => {
+      if (!t.alarm || !t.alarm.on) return;
+      [-1, 0, 1].forEach((i) => {
+        const s = addDays(todayStr, i);
+        const at = ringAt(t, s);
+        if (at === null || at > now || now - at > RING_WINDOW) return;
+        const key = t.id + '|' + s;
+        if (fired[key]) return;
+        markFired(key);
+        if (!isDone(t, s)) ring(t.id, s);
+      });
+    });
+    for (let i = snoozes.length - 1; i >= 0; i--) {
+      if (snoozes[i].at > now) continue;
+      const z = snoozes.splice(i, 1)[0];
+      const t = byId(z.id);
+      if (t && !isDone(t, z.s)) ring(z.id, z.s);
+    }
+  }
+
+  /* ---------- alarms: ringing ---------- */
+  const ringSheet = $('ringSheet');
+  const ringQueue = [];
+  let ringing = null;
+  function ring(id, s) {
+    if (ringing && ringing.id === id && ringing.s === s) return;
+    if (ringing) { ringQueue.push({ id, s }); return; }
+    showRing({ id, s });
+  }
+  function showRing(r) {
+    const t = byId(r.id);
+    if (!t || !t.alarm) { const next = ringQueue.shift(); if (next) showRing(next); return; }
+    ringing = r;
+    const a = t.alarm;
+    $('ringTime').textContent = timeLabel(a.time);
+    $('ringWhen').textContent = (a.before ? BEFORE_LABEL[a.before] + ' 미리 알림 · ' : '') + (relWord(r.s) || shortDate(r.s)) + ' 할 일';
+    const rt = $('ringTask');
+    setKind(rt, t.kind);
+    rt.textContent = t.text;
+    $('ringSnooze').hidden = !a.snooze;
+    $('ringSnooze').textContent = a.snooze + '분 뒤에 다시 알려 줘요';
+    if (sheet.open) closeSheet();
+    if (alarmSheet.open) closeAlarmSheet();
+    if (prefSheet.open) prefSheet.close();
+    if (!ringSheet.open) ringSheet.showModal();
+    startSound(a.sound);
+    if (permState() === 'granted' && document.hidden) notify('⏰ ' + t.text, timeLabel(a.time) + ' 알람이에요.', r.id + '|' + r.s);
+  }
+  // Phones (Android Chrome) only show notifications through the service worker; desktops also allow the plain way.
+  function notify(title, body, tag) {
+    const opts = { body, tag, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png' };
+    if (swReg && swReg.showNotification) { swReg.showNotification(title, opts).catch(() => {}); return; }
+    try {
+      const n = new Notification(title, opts);
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch (e) { /* not allowed here */ }
+  }
+  function stopRing() {
+    stopSound();
+    ringing = null;
+    if (ringSheet.open) ringSheet.close();
+    const next = ringQueue.shift();
+    if (next) showRing(next);
+  }
+  $('ringDone').addEventListener('click', () => {
+    const r = ringing;
+    const t = r && byId(r.id);
+    if (t && !isDone(t, r.s)) toggleOn(t, r.s);
+    stopRing();
+    render();
+  });
+  $('ringSnooze').addEventListener('click', () => {
+    const r = ringing;
+    const t = r && byId(r.id);
+    if (t && t.alarm) {
+      snoozes.push({ id: r.id, s: r.s, at: Date.now() + t.alarm.snooze * 60000 });
+      toast(t.alarm.snooze + '분 뒤에 다시 알려 줄게요.');
+    }
+    stopRing();
+  });
+  $('ringClose').addEventListener('click', stopRing);
+  ringSheet.addEventListener('cancel', (e) => { e.preventDefault(); stopRing(); });
+
+  /* sounds are made on the spot with Web Audio, so there are no sound files */
+  let actx = null;
+  function audio() {
+    if (!actx) {
+      const C = window.AudioContext || window.webkitAudioContext;
+      if (!C) return null;
+      try { actx = new C(); } catch (e) { return null; }
+    }
+    if (actx.state === 'suspended') actx.resume().catch(() => {});
+    return actx;
+  }
+  // Browsers only let a page make sound after it has been touched once, so wake audio on the first touch.
+  ['pointerdown', 'keydown'].forEach((type) => document.addEventListener(type, () => audio(), { once: true, capture: true }));
+  function tone(ctx, freq, start, dur, type, vol) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(vol, start + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start(start);
+    o.stop(start + dur + 0.05);
+  }
+  function playOnce(kind) {
+    if (kind === 'none') return;
+    const ctx = audio();
+    if (!ctx) return;
+    const t0 = ctx.currentTime + 0.02;
+    if (kind === 'chime') [784, 988, 1175, 1568].forEach((f, i) => tone(ctx, f, t0 + i * 0.12, 0.45, 'triangle', 0.25));
+    else { tone(ctx, 880, t0, 0.6, 'sine', 0.35); tone(ctx, 660, t0 + 0.35, 0.9, 'sine', 0.35); }
+  }
+  const buzz = () => { try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) { /* not supported */ } };
+  let soundTimer = 0;
+  function startSound(kind) {
+    stopSound();
+    playOnce(kind);
+    buzz();
+    let n = 0;
+    soundTimer = setInterval(() => {
+      if (++n >= 15) { stopSound(); return; } // about 30 seconds, then quiet; the window stays open
+      playOnce(kind);
+      buzz();
+    }, 2000);
+  }
+  function stopSound() {
+    clearInterval(soundTimer);
+    soundTimer = 0;
+    try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) { /* not supported */ }
+  }
+
+  /* ---------- app settings (skin) ---------- */
+  const prefSheet = $('prefSheet');
+  const skinBtns = SKINS.map((s) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'skin-opt';
+    b.dataset.pick = s.key;
+    b.setAttribute('role', 'radio');
+    const prev = document.createElement('span');
+    prev.className = 'skin-prev';
+    prev.setAttribute('data-skin', s.key);
+    prev.setAttribute('aria-hidden', 'true');
+    [['k-important', '관리비 내기'], ['k-out', '헬스장 가기'], ['k-daily', '물 마시기']].forEach(([k, label]) => {
+      const pv = document.createElement('span');
+      pv.className = 'pv ' + k;
+      pv.textContent = label;
+      prev.appendChild(pv);
+    });
+    const txt = document.createElement('span');
+    txt.className = 'skin-txt';
+    const name = document.createElement('span');
+    name.className = 'skin-name';
+    name.textContent = s.name;
+    const desc = document.createElement('span');
+    desc.className = 'skin-desc';
+    desc.textContent = s.desc;
+    txt.append(name, desc);
+    b.append(prev, txt);
+    b.addEventListener('click', () => applySkin(s.key));
+    $('skinList').appendChild(b);
+    return b;
+  });
+  function applySkin(key) {
+    root.setAttribute('data-skin', key);
+    // Phone status bar follows the skin's paper colour.
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = getComputedStyle(root).getPropertyValue('--paper').trim() || '#FFF6F1';
+    try { localStorage.setItem(LS_SKIN, key); } catch (e) { /* not remembered */ }
+    skinBtns.forEach((b) => {
+      const on = b.dataset.pick === key;
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+    });
+  }
+  // Radio group keys: arrows move and choose, like native radio buttons.
+  $('skinList').addEventListener('keydown', (e) => {
+    const n = (e.key === 'ArrowDown' || e.key === 'ArrowRight') ? 1 : (e.key === 'ArrowUp' || e.key === 'ArrowLeft') ? -1 : 0;
+    if (!n) return;
+    e.preventDefault();
+    const i = SKINS.findIndex((s) => s.key === root.getAttribute('data-skin'));
+    const next = SKINS[(i + n + SKINS.length) % SKINS.length].key;
+    applySkin(next);
+    skinBtns.find((b) => b.dataset.pick === next).focus();
+  });
+  applySkin(root.getAttribute('data-skin') || 'mallang');
+  $('prefBtn').addEventListener('click', () => {
+    closeOpenRow();
+    prefSheet.showModal();
+    const cur = skinBtns.find((b) => b.tabIndex === 0);
+    if (cur) cur.focus();
+  });
+  $('prefDone').addEventListener('click', () => prefSheet.close());
+  prefSheet.addEventListener('click', (e) => { if (e.target === prefSheet) prefSheet.close(); });
+
+  $('clearExamples').addEventListener('click', () => {
+    closeOpenRow();
+    tasks = tasks.filter((t) => !t.example);
+    saveLocal();
+    render();
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    if (ymd(new Date()) !== todayStr) render();
+    checkAlarms();
+  });
+  setInterval(() => { if (ymd(new Date()) !== todayStr) render(); }, 60000);
+  setInterval(checkAlarms, 15000);
+
+  /* ---------- installable app (only when served over http/https, not file://) ---------- */
+  let swReg = null;
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    navigator.serviceWorker.register('sw.js').then((reg) => { swReg = reg; }, () => { /* runs fine without it */ });
+  }
+
+  /* ---------- start ---------- */
+  tasks = loadLocal();
+  const moved = carryOver();
+  loaded = true;
+  render();
+  if (moved) toast('못 끝낸 일 ' + moved + '개를 오늘로 옮겼어요.');
+  checkAlarms();
+})();
+</script>
+</body>
+</html>
