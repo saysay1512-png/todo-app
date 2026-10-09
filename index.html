@@ -2442,7 +2442,19 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   /* ---------- installable app (only when served over http/https, not file://) ---------- */
   let swReg = null;
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-    navigator.serviceWorker.register('sw.js').then((reg) => { swReg = reg; }, () => { /* runs fine without it */ });
+    // A new version took over: reload once so the screen shows it. (Not on the very first install.)
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloading || sheet.open || alarmSheet.open || ringSheet.open) return;
+      reloading = true;
+      location.reload();
+    });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => { swReg = reg; }, () => { /* runs fine without it */ });
+    // Installed apps (iPhone especially) resume from memory instead of reloading, so look for a new version on return.
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && swReg) swReg.update().catch(() => {});
+    });
   }
 
   /* ---------- start ---------- */

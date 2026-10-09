@@ -1,11 +1,12 @@
 /* Service worker: lets the installed app open without a connection.
-   App files: answer from cache at once, then refresh the cache in the background
-   (so a new version shows up the next time the app is opened).
-   Font files (fonts/…) are many small pieces; each is cached the first time a character needs it.
+   App files (page, css, icons): network first, so an online phone always gets the newest version;
+   the cached copy is used only when the network fails or takes longer than NET_WAIT.
+   Font files (fonts/…woff2) never change: cache first, each piece cached the first time a character needs it.
    Bump CACHE when the list of app files changes. */
 'use strict';
 
-const CACHE = 'halil-v2';
+const CACHE = 'halil-v3';
+const NET_WAIT = 4000; // ms to wait for the network before falling back to the saved copy
 const SHELL = [
   './',
   './index.html',
@@ -18,7 +19,7 @@ const SHELL = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -36,19 +37,30 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== self.location.origin) return;
 
   e.respondWith(caches.open(CACHE).then(async (cache) => {
-    // Opening the app at any page path falls back to the cached index.html.
-    const cached = await cache.match(req, { ignoreSearch: true }) ||
-      (req.mode === 'navigate' ? await cache.match('./index.html') : undefined);
-    if (cached && url.pathname.endsWith('.woff2')) return cached; // font files never change
-    const fresh = fetch(req).then((res) => {
+    const saved = () => cache.match(req, { ignoreSearch: true })
+      .then((hit) => hit || (req.mode === 'navigate' ? cache.match('./index.html') : undefined));
+
+    if (url.pathname.endsWith('.woff2')) {
+      const hit = await cache.match(req);
+      if (hit) return hit;
+    }
+
+    // `no-cache` makes the browser ask the server whether the file changed instead of trusting its own HTTP cache.
+    const net = fetch(req, { cache: 'no-cache' }).then((res) => {
       if (res && res.ok) cache.put(req, res.clone());
       return res;
-    }).catch(() => undefined);
-    if (cached) {
-      e.waitUntil(fresh);
-      return cached;
+    });
+    const slow = new Promise((resolve) => setTimeout(resolve, NET_WAIT));
+    try {
+      const res = await Promise.race([net, slow.then(() => undefined)]);
+      if (res) return res;
+      // Network is slow: show the saved copy now, but let the download finish so the cache is fresh next time.
+      e.waitUntil(net.catch(() => {}));
+      return (await saved()) || await net;
+    } catch (err) {
+      return (await saved()) ||
+        new Response('오프라인이에요.', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
     }
-    return (await fresh) || new Response('오프라인이에요.', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
   }));
 });
 
