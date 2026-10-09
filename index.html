@@ -412,6 +412,11 @@ button.wday { width: 40px; padding: 0; justify-content: center; }
   font-size: 0.9375rem;
 }
 .time-in:focus { outline: none; border-color: var(--pen); }
+.time-in:disabled { opacity: 0.4; }
+/* While 하루 종일 is on the time box is disabled; this see-through button on top turns it back on with one tap. */
+.time-wrap { position: relative; display: inline-flex; min-width: 0; }
+.time-cover { position: absolute; inset: 0; border: 0; padding: 0; background: transparent; border-radius: 18px; cursor: pointer; }
+.field-label { font-size: 0.8125rem; color: var(--ink-soft); }
 .sheet .time-in { height: 46px; border-radius: 14px; background: var(--paper); font-size: 1.125rem; }
 .field input[type="time"]:disabled { opacity: 0.6; }
 .meta .when { font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -768,14 +773,17 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
         <input id="newText" type="text" placeholder="할 일을 적어 주세요" maxlength="200" enterkeyhint="done">
         <button type="submit" class="btn-primary">추가</button>
       </div>
-      <fieldset class="opts" id="addKinds"><legend class="sr">종류</legend><span class="opt-label" aria-hidden="true">종류</span></fieldset>
-      <fieldset class="opts" id="addRepeats"><legend class="sr">반복</legend><span class="opt-label" aria-hidden="true">반복</span></fieldset>
-      <div class="opts">
-        <label class="opt-label" for="newTime">시간</label>
-        <input id="newTime" type="time" class="time-in">
-        <button type="button" class="chip" id="newTimeClear" aria-label="시간 지우기" hidden>✕</button>
+      <div class="opts" role="group" aria-labelledby="newTimeLabel">
+        <span class="opt-label" id="newTimeLabel">시간</span>
+        <button type="button" class="chip" id="newAllDay" aria-pressed="true">하루 종일</button>
+        <span class="time-wrap">
+          <input id="newTime" type="time" class="time-in" aria-label="시간 고르기" disabled>
+          <button type="button" class="time-cover" id="newTimeCover" aria-label="시간 정하기"></button>
+        </span>
         <button type="button" class="chip" id="newAlarm" aria-pressed="false" disabled>⏰ 알람</button>
       </div>
+      <fieldset class="opts" id="addKinds"><legend class="sr">종류</legend><span class="opt-label" aria-hidden="true">종류</span></fieldset>
+      <fieldset class="opts" id="addRepeats"><legend class="sr">반복</legend><span class="opt-label" aria-hidden="true">반복</span></fieldset>
     </form>
 
     <div class="notice" id="exampleNotice" hidden>
@@ -846,10 +854,13 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       <input id="sText" type="text" maxlength="200" enterkeyhint="done">
     </div>
     <div class="field">
-      <label for="sTime">시간</label>
-      <div class="row-wrap">
-        <input id="sTime" type="time" class="time-in">
-        <button type="button" class="btn-quiet" id="sTimeClear">시간 없애기</button>
+      <span id="sTimeLabel" class="field-label">시간</span>
+      <div class="row-wrap" role="group" aria-labelledby="sTimeLabel">
+        <button type="button" class="chip" id="sAllDay" aria-pressed="true">하루 종일</button>
+        <span class="time-wrap">
+          <input id="sTime" type="time" class="time-in" aria-label="시간 고르기">
+          <button type="button" class="time-cover" id="sTimeCover" aria-label="시간 정하기"></button>
+        </span>
       </div>
       <p class="note" id="sTimeNote"></p>
     </div>
@@ -1819,16 +1830,28 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
 
   /* ---------- add ---------- */
   let newAlarmOn = false;
+  let newAllDay = true;
+  // 하루 종일 on: no time, time box locked. Off: time box open, starting from the next whole hour.
+  function setNewAllDay(on) {
+    newAllDay = on;
+    if (on) $('newTime').value = '';
+    else if (!isHm($('newTime').value)) $('newTime').value = defaultTime();
+    syncNewTime();
+    if (!on) openTimePicker($('newTime'));
+  }
   function syncNewTime() {
-    const has = isHm($('newTime').value);
-    $('newTimeClear').hidden = !has;
+    $('newAllDay').setAttribute('aria-pressed', newAllDay ? 'true' : 'false');
+    $('newTime').disabled = newAllDay;
+    $('newTimeCover').hidden = !newAllDay;
+    const has = !newAllDay && isHm($('newTime').value);
     $('newAlarm').disabled = !has;
     if (!has) newAlarmOn = false;
     $('newAlarm').setAttribute('aria-pressed', newAlarmOn ? 'true' : 'false');
     $('newAlarm').title = has ? '이 시간에 알람 울리기' : '시간을 먼저 정해 주세요';
   }
   $('newTime').addEventListener('input', syncNewTime);
-  $('newTimeClear').addEventListener('click', () => { $('newTime').value = ''; syncNewTime(); $('newTime').focus(); });
+  $('newAllDay').addEventListener('click', () => setNewAllDay(!newAllDay));
+  $('newTimeCover').addEventListener('click', () => setNewAllDay(false));
   $('newAlarm').addEventListener('click', () => { newAlarmOn = !newAlarmOn; syncNewTime(); });
   syncNewTime();
   // A fresh alarm that rings at the task's own time.
@@ -1845,7 +1868,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       days: preset.days.slice(), doneOn: [], createdAt: Date.now()
     };
     const time = $('newTime').value;
-    if (isHm(time)) t.time = time;
+    if (!newAllDay && isHm(time)) t.time = time;
     if (t.time && newAlarmOn) t.alarm = followAlarm(t.time);
     put(t);
     if (t.alarm) { skipPastRings(t); askPermission(); }
@@ -1857,9 +1880,8 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       toast(when ? '알람도 맞췄어요. ' + when : '알람을 맞췄어요. 이 시간은 이미 지나서 다음부터 울려요.');
     }
     input.value = '';
-    $('newTime').value = '';
     newAlarmOn = false;
-    syncNewTime();
+    setNewAllDay(true);
     setChecked('aRep', 'once');
     render();
     input.focus();
@@ -1899,22 +1921,37 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     $('sNote').textContent = !rep ? shortDate(viewDate) + ' 하루만 보여요. 못 끝내면 다음 날로 넘어가요.'
       : rep === '매일' ? '매일 보여요.' : rep + '마다 보여요.';
   }
+  let sAllDay = true;
+  let sLastTime = '';
+  function setSheetAllDay(on) {
+    sAllDay = on;
+    // Empty the box while 하루 종일 is on, but give the old time back if it's switched off again.
+    if (on) { if (isHm($('sTime').value)) sLastTime = $('sTime').value; $('sTime').value = ''; }
+    else if (!isHm($('sTime').value)) $('sTime').value = sLastTime || defaultTime();
+    syncSheetTime();
+    if (!on) openTimePicker($('sTime'));
+  }
   function syncSheetTime() {
     const t = byId(sheetId);
-    const has = isHm($('sTime').value);
-    $('sTimeClear').hidden = !has;
+    $('sAllDay').setAttribute('aria-pressed', sAllDay ? 'true' : 'false');
+    $('sTime').disabled = sAllDay;
+    $('sTimeCover').hidden = !sAllDay;
+    const has = !sAllDay && isHm($('sTime').value);
     const follows = t && t.alarm && t.alarm.on && t.alarm.follow;
-    $('sTimeNote').textContent = !has ? '시간 없이 그날 할 일로 둬요.'
+    $('sTimeNote').textContent = !has ? '시간을 정하지 않고 그날 하루 종일 할 일로 둬요.'
       : follows ? '알람도 이 시간에 맞춰 울려요.' : '오른쪽으로 밀어 알람을 켜면 이 시간에 울려요.';
   }
   $('sTime').addEventListener('input', syncSheetTime);
-  $('sTimeClear').addEventListener('click', () => { $('sTime').value = ''; syncSheetTime(); });
+  $('sAllDay').addEventListener('click', () => setSheetAllDay(!sAllDay));
+  $('sTimeCover').addEventListener('click', () => setSheetAllDay(false));
   function openSheet(id) {
     const t = byId(id);
     if (!t) return;
     sheetId = id;
     $('sText').value = t.text;
     $('sTime').value = t.time || '';
+    sAllDay = !t.time;
+    sLastTime = t.time || '';
     syncSheetTime();
     setChecked('sKind', t.kind);
     sDays = t.days.slice();
@@ -1937,7 +1974,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       if (!n.days.length && t.days.length) n.date = viewDate;
       if (n.days.length) delete n.from;
       const time = $('sTime').value;
-      if (isHm(time)) n.time = time; else delete n.time;
+      if (!sAllDay && isHm(time)) n.time = time; else delete n.time;
       // Alarm weekdays only make sense inside the task's own repeat days.
       if (n.alarm) n.alarm = Object.assign({}, n.alarm, { days: n.alarm.days.filter((d) => n.days.includes(d)) });
       // An alarm that follows the task's time moves with it; if the time goes away it keeps the last one.
@@ -2051,6 +2088,10 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     $('aPermMsg').textContent = ps === 'default' ? '화면 밖에서도 알림 창으로 받으려면 알림을 허용해 주세요.'
       : ps === 'denied' ? '브라우저에서 알림이 막혀 있어요. 앱 화면 안에서만 울려요.'
       : '이 브라우저는 알림 창을 지원하지 않아요. 앱 화면 안에서만 울려요.';
+  }
+  function openTimePicker(input) {
+    input.focus();
+    try { if (input.showPicker) input.showPicker(); } catch (e) { /* needs a tap on some browsers; focus is enough */ }
   }
   function defaultTime() {
     const h = Math.min(new Date().getHours() + 1, 23);
