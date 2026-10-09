@@ -401,6 +401,20 @@ button.wday { width: 40px; padding: 0; justify-content: center; }
 .is-done .text { text-decoration: line-through; text-decoration-thickness: 2px; }
 .task.is-done .card, .witem.is-done { opacity: 0.55; }
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.8125rem; opacity: 0.85; }
+.time-in {
+  height: 36px;
+  min-width: 0;
+  max-width: 9.5rem;
+  border: 1.5px solid var(--rule);
+  border-radius: 18px;
+  background: transparent;
+  padding: 0 12px;
+  font-size: 0.9375rem;
+}
+.time-in:focus { outline: none; border-color: var(--pen); }
+.sheet .time-in { height: 46px; border-radius: 14px; background: var(--paper); font-size: 1.125rem; }
+.field input[type="time"]:disabled { opacity: 0.6; }
+.meta .when { font-weight: 700; font-variant-numeric: tabular-nums; }
 .tag { border: 1.5px solid currentColor; border-radius: 999px; padding: 0 7px; font-size: 0.75rem; }
 
 .actions, .lactions {
@@ -756,6 +770,12 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       </div>
       <fieldset class="opts" id="addKinds"><legend class="sr">종류</legend><span class="opt-label" aria-hidden="true">종류</span></fieldset>
       <fieldset class="opts" id="addRepeats"><legend class="sr">반복</legend><span class="opt-label" aria-hidden="true">반복</span></fieldset>
+      <div class="opts">
+        <label class="opt-label" for="newTime">시간</label>
+        <input id="newTime" type="time" class="time-in">
+        <button type="button" class="chip" id="newTimeClear" aria-label="시간 지우기" hidden>✕</button>
+        <button type="button" class="chip" id="newAlarm" aria-pressed="false" disabled>⏰ 알람</button>
+      </div>
     </form>
 
     <div class="notice" id="exampleNotice" hidden>
@@ -825,6 +845,14 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       <label for="sText">내용</label>
       <input id="sText" type="text" maxlength="200" enterkeyhint="done">
     </div>
+    <div class="field">
+      <label for="sTime">시간</label>
+      <div class="row-wrap">
+        <input id="sTime" type="time" class="time-in">
+        <button type="button" class="btn-quiet" id="sTimeClear">시간 없애기</button>
+      </div>
+      <p class="note" id="sTimeNote"></p>
+    </div>
     <fieldset class="field"><legend>종류</legend><div class="row-wrap" id="sKinds"></div></fieldset>
     <fieldset class="field">
       <legend>반복</legend>
@@ -865,7 +893,11 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     </div>
     <div class="field">
       <label for="aTime">시간</label>
-      <input id="aTime" type="time" required>
+      <div class="row-wrap" id="aFollowRow" role="group" aria-label="알람 시간 정하는 방법">
+        <button type="button" class="chip" id="aFollowYes"></button>
+        <button type="button" class="chip" id="aFollowNo">따로 정하기</button>
+      </div>
+      <input id="aTime" type="time">
       <div class="row-wrap" id="aQuick" role="group" aria-label="자주 쓰는 시간"></div>
     </div>
     <fieldset class="field"><legend>미리 알림</legend><div class="row-wrap" id="aBefore"></div></fieldset>
@@ -1041,6 +1073,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       createdAt: t.createdAt || Date.now()
     };
     if (isYmd(t.from) && !n.days.length) n.from = t.from;
+    if (isHm(t.time)) n.time = t.time;
     const alarm = normAlarm(t.alarm);
     if (alarm) n.alarm = alarm;
     if (t.example) n.example = true;
@@ -1049,6 +1082,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   const BEFORE = [0, 5, 10, 30, 60];
   const SOUNDS = ['ding', 'chime', 'none'];
   const SNOOZE = [0, 5, 10];
+  const isHm = (v) => typeof v === 'string' && /^\d{2}:\d{2}$/.test(v);
   function normAlarm(a) {
     if (!a || typeof a !== 'object' || !/^\d{2}:\d{2}$/.test(a.time)) return null;
     return {
@@ -1057,7 +1091,8 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       before: BEFORE.includes(a.before) ? a.before : 0,
       days: Array.isArray(a.days) ? [...new Set(a.days.filter((d) => Number.isInteger(d) && d >= 0 && d < 7))].sort() : [],
       sound: SOUNDS.includes(a.sound) ? a.sound : 'ding',
-      snooze: SNOOZE.includes(a.snooze) ? a.snooze : 5
+      snooze: SNOOZE.includes(a.snooze) ? a.snooze : 5,
+      follow: !!a.follow
     };
   }
 
@@ -1067,7 +1102,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     return [
       { id: 'ex1', text: '관리비 내기', kind: 'important', date: todayStr, days: [], doneOn: [], createdAt: now - 6, example: true },
       { id: 'ex2', text: '헬스장 가기', kind: 'out', date: todayStr, days: [1, 3, 5], doneOn: [], createdAt: now - 5, example: true,
-        alarm: { on: true, time: '19:00', before: 10, days: [], sound: 'ding', snooze: 5 } },
+        time: '19:00', alarm: { on: true, time: '19:00', before: 10, days: [], sound: 'ding', snooze: 5, follow: true } },
       { id: 'ex3', text: '물 2리터 마시기', kind: 'daily', date: todayStr, days: [0, 1, 2, 3, 4, 5, 6], doneOn: [], createdAt: now - 4, example: true },
       { id: 'ex4', text: '방 청소하기', kind: 'daily', date: todayStr, days: [0, 6], doneOn: [], createdAt: now - 3, example: true },
       { id: 'ex5', text: '책 30쪽 읽기', kind: 'etc', date: todayStr, days: [0, 1, 2, 3, 4, 5, 6], doneOn: [todayStr], createdAt: now - 2, example: true },
@@ -1110,9 +1145,21 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     return tasks.filter((t) => occursOn(t, s)).sort((a, b) => {
       const ad = isDone(a, s), bd = isDone(b, s);
       if (ad !== bd) return ad ? 1 : -1;
+      // Tasks with a time come first, earliest first; the rest follow by kind.
+      if (!!a.time !== !!b.time) return a.time ? -1 : 1;
+      if (a.time && a.time !== b.time) return a.time < b.time ? -1 : 1;
       if (a.kind !== b.kind) return KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
       return a.createdAt - b.createdAt;
     });
+  }
+  // An alarm set to follow the task's time rings at that time; otherwise at its own time.
+  const alarmTime = (t) => (t.alarm.follow && t.time ? t.time : t.alarm.time);
+  // Short label for the alarm on a card: just ⏰ when it rings at the task's own time.
+  function alarmTag(t) {
+    if (!t.alarm || !t.alarm.on) return '';
+    const a = t.alarm;
+    if (a.follow && t.time) return '⏰' + (a.before ? ' ' + BEFORE_LABEL[a.before] : '');
+    return '⏰ ' + timeLabel(a.time) + (a.before ? ' (' + BEFORE_LABEL[a.before] + ')' : '');
   }
   function reconcile(parent, desired) {
     for (let i = 0; i < desired.length; i++) {
@@ -1220,11 +1267,18 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     if (r.text.textContent !== t.text) r.text.textContent = t.text;
     const rep = repeatLabel(t.days);
     const carry = carryLabel(t);
-    const alarmText = alarmOn ? '⏰ ' + timeLabel(t.alarm.time) : '';
-    const key = t.kind + '|' + rep + '|' + carry + '|' + alarmText + '|' + (t.example ? 1 : 0);
+    const alarmText = alarmTag(t);
+    const timeText = t.time ? timeLabel(t.time) : '';
+    const key = t.kind + '|' + rep + '|' + carry + '|' + alarmText + '|' + timeText + '|' + (t.example ? 1 : 0);
     if (key !== r.metaKey) {
       r.metaKey = key;
       r.meta.textContent = '';
+      if (timeText) {
+        const tm = document.createElement('span');
+        tm.className = 'when';
+        tm.textContent = timeText;
+        r.meta.appendChild(tm);
+      }
       const k = document.createElement('span');
       k.textContent = KIND_LABEL[t.kind] + (rep ? ' · ' + rep + ' 반복' : '');
       r.meta.appendChild(k);
@@ -1388,7 +1442,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     el._refs.check.setAttribute('aria-checked', done ? 'true' : 'false');
     el._refs.check.setAttribute('aria-label', (done ? '완료 취소: ' : '완료 표시: ') + t.text + ', ' + shortDate(s));
     if (el._refs.text.textContent !== t.text) el._refs.text.textContent = t.text;
-    const rep = (t.alarm && t.alarm.on ? '⏰ ' + timeLabel(t.alarm.time) + '  ' : '') + (repeatLabel(t.days) || (carryLabel(t) ? '넘어옴' : ''));
+    const rep = [t.time ? timeLabel(t.time) : '', alarmTag(t), repeatLabel(t.days) || (carryLabel(t) ? '넘어옴' : '')].filter(Boolean).join(' · ');
     if (el._refs.rep.textContent !== rep) el._refs.rep.textContent = rep;
     return el;
   }
@@ -1764,6 +1818,22 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   PRESETS.forEach((p, i) => $('addRepeats').appendChild(radioChip('aRep', p.key, p.label, '', i === 0)));
 
   /* ---------- add ---------- */
+  let newAlarmOn = false;
+  function syncNewTime() {
+    const has = isHm($('newTime').value);
+    $('newTimeClear').hidden = !has;
+    $('newAlarm').disabled = !has;
+    if (!has) newAlarmOn = false;
+    $('newAlarm').setAttribute('aria-pressed', newAlarmOn ? 'true' : 'false');
+    $('newAlarm').title = has ? '이 시간에 알람 울리기' : '시간을 먼저 정해 주세요';
+  }
+  $('newTime').addEventListener('input', syncNewTime);
+  $('newTimeClear').addEventListener('click', () => { $('newTime').value = ''; syncNewTime(); $('newTime').focus(); });
+  $('newAlarm').addEventListener('click', () => { newAlarmOn = !newAlarmOn; syncNewTime(); });
+  syncNewTime();
+  // A fresh alarm that rings at the task's own time.
+  const followAlarm = (time) => ({ on: true, time, before: 0, days: [], sound: 'ding', snooze: 5, follow: true });
+
   $('addForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const input = $('newText');
@@ -1774,12 +1844,22 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       id: newId(), text, kind: checkedValue('aKind') || 'daily', date: viewDate,
       days: preset.days.slice(), doneOn: [], createdAt: Date.now()
     };
+    const time = $('newTime').value;
+    if (isHm(time)) t.time = time;
+    if (t.time && newAlarmOn) t.alarm = followAlarm(t.time);
     put(t);
+    if (t.alarm) { skipPastRings(t); askPermission(); }
     if (!occursOn(t, viewDate)) {
       const next = nextOccurrence(t, viewDate);
       toast(preset.label + ' 반복이라 ' + shortDate(next) + '부터 보여요.');
+    } else if (t.alarm) {
+      const when = nextRingText(t);
+      toast(when ? '알람도 맞췄어요. ' + when : '알람을 맞췄어요. 이 시간은 이미 지나서 다음부터 울려요.');
     }
     input.value = '';
+    $('newTime').value = '';
+    newAlarmOn = false;
+    syncNewTime();
     setChecked('aRep', 'once');
     render();
     input.focus();
@@ -1819,11 +1899,23 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     $('sNote').textContent = !rep ? shortDate(viewDate) + ' 하루만 보여요. 못 끝내면 다음 날로 넘어가요.'
       : rep === '매일' ? '매일 보여요.' : rep + '마다 보여요.';
   }
+  function syncSheetTime() {
+    const t = byId(sheetId);
+    const has = isHm($('sTime').value);
+    $('sTimeClear').hidden = !has;
+    const follows = t && t.alarm && t.alarm.on && t.alarm.follow;
+    $('sTimeNote').textContent = !has ? '시간 없이 그날 할 일로 둬요.'
+      : follows ? '알람도 이 시간에 맞춰 울려요.' : '오른쪽으로 밀어 알람을 켜면 이 시간에 울려요.';
+  }
+  $('sTime').addEventListener('input', syncSheetTime);
+  $('sTimeClear').addEventListener('click', () => { $('sTime').value = ''; syncSheetTime(); });
   function openSheet(id) {
     const t = byId(id);
     if (!t) return;
     sheetId = id;
     $('sText').value = t.text;
+    $('sTime').value = t.time || '';
+    syncSheetTime();
     setChecked('sKind', t.kind);
     sDays = t.days.slice();
     syncSheet();
@@ -1844,10 +1936,15 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       // Turning a repeating task into a one-day task pins it to the day being looked at.
       if (!n.days.length && t.days.length) n.date = viewDate;
       if (n.days.length) delete n.from;
+      const time = $('sTime').value;
+      if (isHm(time)) n.time = time; else delete n.time;
       // Alarm weekdays only make sense inside the task's own repeat days.
       if (n.alarm) n.alarm = Object.assign({}, n.alarm, { days: n.alarm.days.filter((d) => n.days.includes(d)) });
+      // An alarm that follows the task's time moves with it; if the time goes away it keeps the last one.
+      if (n.alarm && n.alarm.follow) n.alarm = n.time ? Object.assign({}, n.alarm, { time: n.time }) : Object.assign({}, n.alarm, { follow: false });
       if (text !== t.text) delete n.example;
       put(n);
+      if (n.alarm) skipPastRings(n);
       if (!occursOn(n, viewDate)) {
         const next = nextOccurrence(n, addDays(viewDate, 1));
         if (next) toast('이날은 반복하는 요일이 아니라서 ' + shortDate(next) + '에 보여요.');
@@ -1872,7 +1969,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   const SOUND_LABEL = { ding: '딩동', chime: '뾰로롱', none: '소리 없이' };
   const SNOOZE_LABEL = { 0: '안 함', 5: '5분 뒤', 10: '10분 뒤' };
   let alarmId = null;
-  let aDraft = { on: true, days: [] };
+  let aDraft = { on: true, days: [], follow: false };
 
   BEFORE.forEach((m) => $('aBefore').appendChild(radioChip('aBefore', String(m), BEFORE_LABEL[m], '', m === 0)));
   SOUNDS.forEach((k) => $('aSound').appendChild(radioChip('aSnd', k, SOUND_LABEL[k], '', k === 'ding')));
@@ -1902,6 +1999,13 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   });
   $('aAllDays').addEventListener('click', () => { aDraft.days = []; syncAlarmSheet(); });
   $('aOn').addEventListener('click', () => { aDraft.on = !aDraft.on; syncAlarmSheet(); });
+  $('aFollowYes').addEventListener('click', () => { aDraft.follow = true; syncAlarmSheet(); });
+  $('aFollowNo').addEventListener('click', () => {
+    const t = byId(alarmId);
+    aDraft.follow = false;
+    if (t && t.time && !isHm($('aTime').value)) $('aTime').value = t.time;
+    syncAlarmSheet();
+  });
   $('aTime').addEventListener('input', syncAlarmSheet);
 
   const permState = () => ('Notification' in window ? Notification.permission : 'unsupported');
@@ -1918,6 +2022,14 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     const t = byId(alarmId);
     if (!t) return;
     $('aOn').setAttribute('aria-checked', aDraft.on ? 'true' : 'false');
+    const follow = aDraft.follow && !!t.time;
+    $('aFollowRow').hidden = !t.time;
+    if (t.time) $('aFollowYes').textContent = '할 일 시간에 맞추기 (' + timeLabel(t.time) + ')';
+    $('aFollowYes').setAttribute('aria-pressed', follow ? 'true' : 'false');
+    $('aFollowNo').setAttribute('aria-pressed', follow ? 'false' : 'true');
+    $('aTime').disabled = follow;
+    if (follow) $('aTime').value = t.time;
+    $('aQuick').hidden = follow;
     quickBtns.forEach(({ b, hm }) => b.setAttribute('aria-pressed', $('aTime').value === hm ? 'true' : 'false'));
     if (!t.days.length) {
       $('aDaysWrap').hidden = true;
@@ -1948,8 +2060,8 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     const t = byId(id);
     if (!t) return;
     alarmId = id;
-    const a = t.alarm || { on: true, time: defaultTime(), before: 0, days: [], sound: 'ding', snooze: 5 };
-    aDraft = { on: t.alarm ? a.on : true, days: a.days.slice() };
+    const a = t.alarm || { on: true, time: t.time || defaultTime(), before: 0, days: [], sound: 'ding', snooze: 5, follow: !!t.time };
+    aDraft = { on: t.alarm ? a.on : true, days: a.days.slice(), follow: a.follow && !!t.time };
     $('alarmFor').textContent = t.text;
     $('aTime').value = a.time;
     setChecked('aBefore', String(a.before));
@@ -1974,11 +2086,12 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   $('alarmForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const t = byId(alarmId);
-    const time = $('aTime').value;
-    if (!/^\d{2}:\d{2}$/.test(time)) { $('aTime').focus(); return; }
+    const follow = !!(t && aDraft.follow && t.time);
+    const time = follow ? t.time : $('aTime').value;
+    if (!isHm(time)) { $('aTime').focus(); return; }
     if (t) {
       const n = saveAlarm(t, normAlarm({
-        on: aDraft.on, time, days: aDraft.days.filter((d) => t.days.includes(d)),
+        on: aDraft.on, time, follow, days: aDraft.days.filter((d) => t.days.includes(d)),
         before: Number(checkedValue('aBefore')), sound: checkedValue('aSnd'), snooze: Number(checkedValue('aSnz'))
       }));
       if (aDraft.on) askPermission();
@@ -2002,7 +2115,15 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   alarmSheet.addEventListener('close', () => { alarmId = null; });
 
   function toggleAlarm(t) {
-    if (!t.alarm) { openAlarmSheet(t.id); return; } // nothing set yet: start from the settings
+    if (!t.alarm && t.time) { // has a time: just ring at it
+      const n = saveAlarm(t, followAlarm(t.time));
+      askPermission();
+      render();
+      const when = nextRingText(n);
+      toast('할 일 시간에 맞춰 알람을 켰어요.' + (when ? ' ' + when : ''));
+      return;
+    }
+    if (!t.alarm) { openAlarmSheet(t.id); return; } // no time and no alarm yet: start from the settings
     const on = !t.alarm.on;
     const n = saveAlarm(t, Object.assign({}, t.alarm, { on }));
     if (on) askPermission();
@@ -2017,7 +2138,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     const a = t.alarm;
     if (!a || !a.on || !occursOn(t, s)) return null;
     if (t.days.length && a.days.length && !a.days.includes(weekday(s))) return null;
-    const p = a.time.split(':').map(Number);
+    const p = alarmTime(t).split(':').map(Number);
     const d = parseYmd(s);
     d.setHours(p[0], p[1] - a.before, 0, 0);
     return d.getTime();
@@ -2054,9 +2175,10 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     [-1, 0, 1].forEach((i) => {
       const s = addDays(todayStr, i);
       const at = ringAt(t, s);
-      if (at !== null && at <= now) markFired(t.id + '|' + s);
+      if (at !== null && at <= now) markFired(firedKey(t, s));
     });
   }
+  const firedKey = (t, s) => t.id + '|' + s + '|' + alarmTime(t) + '|' + t.alarm.before;
   const snoozes = []; // { id, s, at }
   function checkAlarms() {
     if (!loaded) return;
@@ -2067,7 +2189,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
         const s = addDays(todayStr, i);
         const at = ringAt(t, s);
         if (at === null || at > now || now - at > RING_WINDOW) return;
-        const key = t.id + '|' + s;
+        const key = firedKey(t, s);
         if (fired[key]) return;
         markFired(key);
         if (!isDone(t, s)) ring(t.id, s);
@@ -2095,7 +2217,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     if (!t || !t.alarm) { const next = ringQueue.shift(); if (next) showRing(next); return; }
     ringing = r;
     const a = t.alarm;
-    $('ringTime').textContent = timeLabel(a.time);
+    $('ringTime').textContent = timeLabel(alarmTime(t));
     $('ringWhen').textContent = (a.before ? BEFORE_LABEL[a.before] + ' 미리 알림 · ' : '') + (relWord(r.s) || shortDate(r.s)) + ' 할 일';
     const rt = $('ringTask');
     setKind(rt, t.kind);
@@ -2107,7 +2229,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     if (prefSheet.open) prefSheet.close();
     if (!ringSheet.open) ringSheet.showModal();
     startSound(a.sound);
-    if (permState() === 'granted' && document.hidden) notify('⏰ ' + t.text, timeLabel(a.time) + ' 알람이에요.', r.id + '|' + r.s);
+    if (permState() === 'granted' && document.hidden) notify('⏰ ' + t.text, timeLabel(alarmTime(t)) + ' 알람이에요.', r.id + '|' + r.s);
   }
   // Phones (Android Chrome) only show notifications through the service worker; desktops also allow the plain way.
   function notify(title, body, tag) {
