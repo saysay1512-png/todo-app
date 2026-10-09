@@ -512,6 +512,8 @@ button.wday { width: 40px; padding: 0; justify-content: center; }
 .witem .check svg { width: 12px; height: 12px; }
 .witem .text { flex: 1; min-width: 0; font-size: 0.9375rem; }
 .witem .wrep { flex: 0 0 auto; font-size: 0.75rem; opacity: 0.85; }
+.next-sec { margin-top: 6px; }
+.next-date { font-size: 0.8125rem; color: var(--ink-soft); }
 .wempty { margin: 0; padding: 0 2px 2px; font-size: 0.875rem; color: var(--ink-soft); }
 
 /* Month */
@@ -762,6 +764,15 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     </div>
 
     <div class="list" id="list" role="list"></div>
+
+    <section class="wsec box next-sec" id="nextSec" aria-labelledby="nextTitle">
+      <button type="button" class="whead" id="nextHead" data-act="wday">
+        <span class="wdate" id="nextTitle">내일 할 일</span>
+        <span class="next-date" id="nextDate"></span>
+        <span class="wcount" id="nextCount"></span>
+      </button>
+      <div class="witems" id="nextList"></div>
+    </section>
 
     <footer class="foot">
       <p id="hint">할 일을 왼쪽으로 밀면 수정·지우기가 나오고, 한 번 더 밀면 바로 지워져요. 오른쪽으로 밀면 알람이 나와요. 못 끝낸 일은 다음 날로 넘어가요.</p>
@@ -1293,7 +1304,31 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     reconcile(list, desired);
 
     $('hint').hidden = !items.length;
+    renderNextDay();
     $('exampleNotice').hidden = !(loaded && tasks.some((t) => t.example));
+  }
+
+  /* ---------- day view: the next day's tasks under the list ---------- */
+  const nItems = new Map(); // "date|id" -> element
+  const nextEmpty = document.createElement('p');
+  nextEmpty.className = 'wempty';
+  function renderNextDay() {
+    const s = addDays(viewDate, 1);
+    const d = parseYmd(s);
+    const rel = relWord(s);
+    const items = loaded ? itemsOn(s) : [];
+    const doneN = items.filter((t) => isDone(t, s)).length;
+    $('nextTitle').textContent = rel === '내일' ? '내일 할 일' : '다음 날 할 일';
+    $('nextDate').textContent = (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + WD[d.getDay()] + '요일';
+    $('nextCount').textContent = items.length ? doneN + '/' + items.length : '';
+    $('nextHead').dataset.date = s;
+    $('nextHead').setAttribute('aria-label', $('nextTitle').textContent + ', ' + shortDate(s) + ', ' +
+      (items.length ? items.length + '개' : '없음') + '. 그날 목록 보기');
+    nextEmpty.textContent = (rel === '내일' ? '내일' : '이날') + ' 할 일은 아직 없어요.';
+    const seen = new Set();
+    const desired = items.map((t) => wItemFor(nItems, seen, s, t));
+    nItems.forEach((el, key) => { if (!seen.has(key)) nItems.delete(key); });
+    reconcile($('nextList'), desired.length ? desired : [nextEmpty]);
   }
 
   /* ---------- week view ---------- */
@@ -1341,6 +1376,22 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     el._refs = { check, text, rep };
     return el;
   }
+  // Small card for day s, reused through cache ("date|id" -> element) so a pressed check button stays put.
+  function wItemFor(cache, seen, s, t) {
+    const key = s + '|' + t.id;
+    seen.add(key);
+    let el = cache.get(key);
+    if (!el) { el = createWItem(s, t); cache.set(key, el); }
+    const done = isDone(t, s);
+    setKind(el, t.kind);
+    el.classList.toggle('is-done', done);
+    el._refs.check.setAttribute('aria-checked', done ? 'true' : 'false');
+    el._refs.check.setAttribute('aria-label', (done ? '완료 취소: ' : '완료 표시: ') + t.text + ', ' + shortDate(s));
+    if (el._refs.text.textContent !== t.text) el._refs.text.textContent = t.text;
+    const rep = (t.alarm && t.alarm.on ? '⏰ ' + timeLabel(t.alarm.time) + '  ' : '') + (repeatLabel(t.days) || (carryLabel(t) ? '넘어옴' : ''));
+    if (el._refs.rep.textContent !== rep) el._refs.rep.textContent = rep;
+    return el;
+  }
   function renderWeek() {
     const start = mondayOf(viewDate);
     const end = addDays(start, 6);
@@ -1374,27 +1425,13 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       w.sec.classList.toggle('is-weekend', d.getDay() === 0 || d.getDay() === 6);
       w.sec.classList.toggle('is-sel', s === todayStr);
 
-      const desired = items.map((t) => {
-        const key = s + '|' + t.id;
-        seen.add(key);
-        let el = wItems.get(key);
-        if (!el) { el = createWItem(s, t); wItems.set(key, el); }
-        const done = isDone(t, s);
-        setKind(el, t.kind);
-        el.classList.toggle('is-done', done);
-        el._refs.check.setAttribute('aria-checked', done ? 'true' : 'false');
-        el._refs.check.setAttribute('aria-label', (done ? '완료 취소: ' : '완료 표시: ') + t.text + ', ' + shortDate(s));
-        if (el._refs.text.textContent !== t.text) el._refs.text.textContent = t.text;
-        const rep = (t.alarm && t.alarm.on ? '⏰ ' + timeLabel(t.alarm.time) + '  ' : '') + (repeatLabel(t.days) || (carryLabel(t) ? '넘어옴' : ''));
-        if (el._refs.rep.textContent !== rep) el._refs.rep.textContent = rep;
-        return el;
-      });
+      const desired = items.map((t) => wItemFor(wItems, seen, s, t));
       reconcile(w.items, desired.length ? desired : [w.empty]);
     });
     wItems.forEach((el, key) => { if (!seen.has(key)) wItems.delete(key); });
     setTally('w', total, doneAll, '이번 주 할 일이 없어요');
   }
-  $('weekList').addEventListener('click', (e) => {
+  function onSmallCardClick(e) {
     const el = e.target.closest('[data-act]');
     if (!el) return;
     if (el.dataset.act === 'wday') { setView('day'); goTo(el.dataset.date, true); return; }
@@ -1402,7 +1439,9 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     if (!t) return;
     toggleOn(t, el.dataset.date);
     render();
-  });
+  }
+  $('weekList').addEventListener('click', onSmallCardClick);
+  $('nextSec').addEventListener('click', onSmallCardClick);
   $('wPrev').addEventListener('click', () => { viewDate = addDays(viewDate, -7); render(); });
   $('wNext').addEventListener('click', () => { viewDate = addDays(viewDate, 7); render(); });
   $('wThisWeek').addEventListener('click', () => { viewDate = todayStr; render(); });
