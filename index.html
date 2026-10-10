@@ -250,6 +250,7 @@ h1 {
 
 /* Day: week strip */
 /* The strip follows the finger sideways; letting go past a little way slides to the next/previous week. */
+.strip-month { margin: 0 0 -8px; font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1rem; color: var(--ink-soft); }
 .strip { flex: 1; min-width: 0; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 /* 21 days in a row (7 spare on each side) so dragging never shows a gap; the middle 7 are on screen
    with the chosen day in the centre. Each cell is 1/21 of the track = 1/7 of the strip. */
@@ -769,8 +770,9 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
         <h1 id="dayTitle">오늘</h1>
         <button type="button" class="btn-quiet" id="goToday" hidden>오늘로</button>
       </div>
+      <p class="strip-month" id="stripMonth" aria-live="polite"></p>
       <div class="title-row">
-        <div class="strip" id="strip" role="group" aria-label="날짜 고르기. 옆으로 밀면 하루씩 넘어가요">
+        <div class="strip" id="strip" role="group" aria-label="날짜 고르기. 옆으로 밀면 다른 날짜를 볼 수 있어요. 누르면 그날로 가요">
           <div class="days" id="days"></div>
         </div>
       </div>
@@ -1318,18 +1320,30 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   const dayBtns = [];
   let stripSwipedAt = 0;
   const STRIP_SIDE = 10; // buttons on each side of the centre one (3 visible + 7 spare)
+  // Swiping only moves what the strip shows (stripCenter); the chosen day (viewDate) changes only by tapping.
+  // When viewDate changes some other way (오늘로, other tabs, keyboard), the strip re-centres on it.
+  let stripCenter = viewDate;
+  let stripSyncedFor = viewDate;
   for (let i = 0; i < STRIP_SIDE * 2 + 1; i++) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'day';
     b.innerHTML = '<span class="wd"></span><span class="dn"></span><span class="dot"></span>';
     // Tapping a day slides the strip so that day lands in the middle.
-    b.addEventListener('click', () => { if (Date.now() - stripSwipedAt > 350) slideDays(i - STRIP_SIDE); });
+    b.addEventListener('click', () => {
+      if (Date.now() - stripSwipedAt < 350 || sliding) return;
+      stripSyncedFor = b.dataset.date; // keep the strip where it is
+      goTo(b.dataset.date);
+    });
     dayBtns.push(b);
     $('days').appendChild(b);
   }
   function renderStrip() {
-    const start = addDays(viewDate, -STRIP_SIDE);
+    if (stripSyncedFor !== viewDate) { stripCenter = viewDate; stripSyncedFor = viewDate; }
+    const start = addDays(stripCenter, -STRIP_SIDE);
+    const c = parseYmd(stripCenter);
+    $('stripMonth').textContent = (c.getFullYear() !== parseYmd(todayStr).getFullYear() ? c.getFullYear() + '년 ' : '') + (c.getMonth() + 1) + '월';
+    $('goToday').hidden = viewDate === todayStr && Math.abs(dayDiff(todayStr, stripCenter)) <= 3;
     dayBtns.forEach((b, i) => {
       const s = addDays(start, i);
       const onScreen = Math.abs(i - STRIP_SIDE) <= 3;
@@ -1353,7 +1367,6 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     const rel = relWord(viewDate);
     $('dayTitle').textContent = (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + WD[d.getDay()] + '요일';
     $('brand').textContent = '할 일 수첩' + (rel ? ' · ' + rel : '');
-    $('goToday').hidden = viewDate === todayStr;
     renderStrip();
 
     const items = loaded ? itemsOn(viewDate) : [];
@@ -1665,8 +1678,8 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   const strip = $('strip');
   const daysEl = $('days');
   let sdrag = null;
-  // Slide n days (n > 0 = later). The track glides n cells, then is quietly re-centred on the new day,
-  // which looks identical, so the motion feels continuous.
+  // Move the strip n days (n > 0 = later) without changing the chosen day. The track glides n cells,
+  // then is quietly re-drawn around the new centre, which looks identical, so the motion feels continuous.
   let sliding = false;
   function slideDays(n) {
     if (!n || sliding) return;
@@ -1676,7 +1689,8 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     setTimeout(() => {
       daysEl.classList.add('is-dragging');
       daysEl.style.transform = '';
-      goTo(addDays(viewDate, n));
+      stripCenter = addDays(stripCenter, n);
+      renderStrip();
       void daysEl.offsetWidth; // settle the re-centred position before transitions come back
       daysEl.classList.remove('is-dragging');
       sliding = false;
@@ -1717,15 +1731,22 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   }
   strip.addEventListener('pointerup', endStripDrag);
   strip.addEventListener('pointercancel', endStripDrag);
-  // Keyboard: ← → move a day, PageUp / PageDown a week.
+  // Keyboard: ← → choose the day before/after, PageUp / PageDown look a week back/ahead without choosing.
   strip.addEventListener('keydown', (e) => {
-    const n = { ArrowLeft: -1, ArrowRight: 1, PageUp: -7, PageDown: 7 }[e.key];
-    if (!n) return;
-    e.preventDefault();
-    slideDays(n);
-    setTimeout(() => { const cur = dayBtns[STRIP_SIDE]; if (cur) cur.focus(); }, 240);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      goTo(addDays(viewDate, e.key === 'ArrowLeft' ? -1 : 1));
+      const cur = dayBtns.find((b) => b.dataset.date === viewDate);
+      if (cur) cur.focus();
+    } else if (e.key === 'PageUp' || e.key === 'PageDown') {
+      e.preventDefault();
+      slideDays(e.key === 'PageUp' ? -7 : 7);
+    }
   });
-  $('goToday').addEventListener('click', () => goTo(todayStr));
+  $('goToday').addEventListener('click', () => {
+    stripSyncedFor = ''; // always bring today back to the middle, even if it's already chosen
+    goTo(todayStr, true);
+  });
 
   /* ---------- toast ---------- */
   let toastTimer = 0;
