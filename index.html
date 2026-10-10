@@ -251,12 +251,16 @@ h1 {
 /* Day: week strip */
 /* The strip follows the finger sideways; letting go past a little way slides to the next/previous week. */
 .strip { flex: 1; min-width: 0; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
-.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; transition: transform 0.2s ease, opacity 0.2s ease; }
+/* 21 days in a row (7 spare on each side) so dragging never shows a gap; the middle 7 are on screen
+   with the chosen day in the centre. Each cell is 1/21 of the track = 1/7 of the strip. */
+.days { display: flex; width: 300%; transform: translateX(-33.3333%); transition: transform 0.22s ease; }
 .days.is-dragging { transition: none; }
 .day {
+  flex: 0 0 calc(100% / 21);
   min-width: 0;
   height: 60px;
-  border: 0;
+  border: 2px solid transparent;
+  background-clip: padding-box;
   border-radius: 16px;
   background: none;
   padding: 0;
@@ -766,7 +770,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
         <button type="button" class="btn-quiet" id="goToday" hidden>오늘로</button>
       </div>
       <div class="title-row">
-        <div class="strip" id="strip" role="group" aria-label="날짜 고르기. 옆으로 밀면 다른 주로 가요">
+        <div class="strip" id="strip" role="group" aria-label="날짜 고르기. 옆으로 밀면 하루씩 넘어가요">
           <div class="days" id="days"></div>
         </div>
       </div>
@@ -1313,19 +1317,24 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   // week strip: seven buttons made once, patched on every render
   const dayBtns = [];
   let stripSwipedAt = 0;
-  for (let i = 0; i < 7; i++) {
+  const STRIP_SIDE = 10; // buttons on each side of the centre one (3 visible + 7 spare)
+  for (let i = 0; i < STRIP_SIDE * 2 + 1; i++) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'day';
     b.innerHTML = '<span class="wd"></span><span class="dn"></span><span class="dot"></span>';
-    b.addEventListener('click', () => { if (Date.now() - stripSwipedAt > 350) goTo(b.dataset.date); });
+    // Tapping a day slides the strip so that day lands in the middle.
+    b.addEventListener('click', () => { if (Date.now() - stripSwipedAt > 350) slideDays(i - STRIP_SIDE); });
     dayBtns.push(b);
     $('days').appendChild(b);
   }
   function renderStrip() {
-    const start = mondayOf(viewDate);
+    const start = addDays(viewDate, -STRIP_SIDE);
     dayBtns.forEach((b, i) => {
       const s = addDays(start, i);
+      const onScreen = Math.abs(i - STRIP_SIDE) <= 3;
+      b.tabIndex = onScreen ? 0 : -1;
+      if (onScreen) b.removeAttribute('aria-hidden'); else b.setAttribute('aria-hidden', 'true');
       const d = parseYmd(s);
       const open = loaded ? tasks.filter((t) => occursOn(t, s) && !isDone(t, s)).length : 0;
       b.dataset.date = s;
@@ -1656,22 +1665,25 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   const strip = $('strip');
   const daysEl = $('days');
   let sdrag = null;
-  function slideWeek(dir) { // dir 1 = next week (strip leaves to the left), -1 = previous week
-    const w = strip.offsetWidth;
-    daysEl.style.transform = 'translateX(' + (-dir * w) + 'px)';
-    daysEl.style.opacity = '0';
+  // Slide n days (n > 0 = later). The track glides n cells, then is quietly re-centred on the new day,
+  // which looks identical, so the motion feels continuous.
+  let sliding = false;
+  function slideDays(n) {
+    if (!n || sliding) return;
+    sliding = true;
+    daysEl.classList.remove('is-dragging');
+    daysEl.style.transform = 'translateX(calc(-33.3333% - ' + (n * 100 / 21) + '%))';
     setTimeout(() => {
       daysEl.classList.add('is-dragging');
-      goTo(addDays(viewDate, 7 * dir));
-      daysEl.style.transform = 'translateX(' + (dir * w) + 'px)';
-      void daysEl.offsetWidth; // apply the start position before animating back in
-      daysEl.classList.remove('is-dragging');
       daysEl.style.transform = '';
-      daysEl.style.opacity = '';
-    }, 200);
+      goTo(addDays(viewDate, n));
+      void daysEl.offsetWidth; // settle the re-centred position before transitions come back
+      daysEl.classList.remove('is-dragging');
+      sliding = false;
+    }, 220);
   }
   strip.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (sliding || (e.pointerType === 'mouse' && e.button !== 0)) return;
     sdrag = { pid: e.pointerId, x0: e.clientX, y0: e.clientY, dx: 0, active: false };
   });
   strip.addEventListener('pointermove', (e) => {
@@ -1685,9 +1697,9 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       try { strip.setPointerCapture(e.pointerId); } catch (err) { /* already released */ }
       daysEl.classList.add('is-dragging');
     }
-    sdrag.dx = dx;
-    daysEl.style.transform = 'translateX(' + dx + 'px)';
-    daysEl.style.opacity = String(1 - Math.min(Math.abs(dx) / strip.offsetWidth, 0.6));
+    const cell = strip.offsetWidth / 7;
+    sdrag.dx = Math.max(-7 * cell, Math.min(7 * cell, dx));
+    daysEl.style.transform = 'translateX(calc(-33.3333% + ' + sdrag.dx + 'px))';
   });
   function endStripDrag(e) {
     if (!sdrag || e.pointerId !== sdrag.pid) return;
@@ -1696,8 +1708,12 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     if (!d.active) return;
     stripSwipedAt = Date.now();
     daysEl.classList.remove('is-dragging');
-    if (e.type !== 'pointercancel' && Math.abs(d.dx) > Math.min(60, strip.offsetWidth * 0.18)) slideWeek(d.dx < 0 ? 1 : -1);
-    else { daysEl.style.transform = ''; daysEl.style.opacity = ''; }
+    // One day per cell dragged (rounded); a short but clear flick still moves one day.
+    const cell = strip.offsetWidth / 7;
+    let n = Math.round(-d.dx / cell);
+    if (!n && Math.abs(d.dx) > Math.min(24, cell * 0.4)) n = d.dx < 0 ? 1 : -1;
+    if (e.type !== 'pointercancel' && n) slideDays(n);
+    else daysEl.style.transform = '';
   }
   strip.addEventListener('pointerup', endStripDrag);
   strip.addEventListener('pointercancel', endStripDrag);
@@ -1706,9 +1722,8 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     const n = { ArrowLeft: -1, ArrowRight: 1, PageUp: -7, PageDown: 7 }[e.key];
     if (!n) return;
     e.preventDefault();
-    goTo(addDays(viewDate, n));
-    const cur = dayBtns.find((b) => b.dataset.date === viewDate);
-    if (cur) cur.focus();
+    slideDays(n);
+    setTimeout(() => { const cur = dayBtns[STRIP_SIDE]; if (cur) cur.focus(); }, 240);
   });
   $('goToday').addEventListener('click', () => goTo(todayStr));
 
