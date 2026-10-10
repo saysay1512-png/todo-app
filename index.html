@@ -249,7 +249,10 @@ h1 {
 @media (hover: hover) { .nav-btn:hover { color: var(--ink); } }
 
 /* Day: week strip */
-.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+/* The strip follows the finger sideways; letting go past a little way slides to the next/previous week. */
+.strip { flex: 1; min-width: 0; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; transition: transform 0.2s ease, opacity 0.2s ease; }
+.days.is-dragging { transition: none; }
 .day {
   min-width: 0;
   height: 60px;
@@ -644,6 +647,10 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
 .field input[type="text"]:focus { outline: none; border-color: var(--pen); }
 .row-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
 .wdays { display: flex; flex-wrap: wrap; gap: 6px; }
+.add-days { padding-left: calc(2.5rem + 8px); margin-top: -2px; }
+@media (max-width: 380px) { .add-days { padding-left: 0; } }
+.add-days { gap: 5px; }
+.add-days .wday { width: 36px; }
 .note { margin: 0; font-size: 0.875rem; color: var(--ink-soft); }
 .sheet-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 4px; }
 .sheet-foot .spacer { flex: 1; }
@@ -732,7 +739,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bar span, .check i, .card, .switch i { transition: none; }
+  .bar span, .check i, .card, .switch i, .days { transition: none; }
   .ring-bell { animation: none; }
 }
 </style>
@@ -759,9 +766,9 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
         <button type="button" class="btn-quiet" id="goToday" hidden>오늘로</button>
       </div>
       <div class="title-row">
-        <button type="button" class="nav-btn" id="prevWeek" aria-label="지난주"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <div class="days" id="days" style="flex:1;min-width:0"></div>
-        <button type="button" class="nav-btn" id="nextWeek" aria-label="다음 주"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="strip" id="strip" role="group" aria-label="날짜 고르기. 옆으로 밀면 다른 주로 가요">
+          <div class="days" id="days"></div>
+        </div>
       </div>
       <div class="tally" aria-live="polite"><strong id="dTallyOpen">&nbsp;</strong><span id="dTallyDone"></span></div>
       <div class="bar" aria-hidden="true"><span id="dBarFill"></span></div>
@@ -784,6 +791,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       </div>
       <fieldset class="opts" id="addKinds"><legend class="sr">종류</legend><span class="opt-label" aria-hidden="true">종류</span></fieldset>
       <fieldset class="opts" id="addRepeats"><legend class="sr">반복</legend><span class="opt-label" aria-hidden="true">반복</span></fieldset>
+      <div class="wdays add-days" id="addDays" role="group" aria-label="반복할 요일" hidden></div>
     </form>
 
     <div class="notice" id="exampleNotice" hidden>
@@ -989,7 +997,6 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   const PRESETS = [
     { key: 'once', label: '이날만', days: [] },
     { key: 'daily', label: '매일', days: [0, 1, 2, 3, 4, 5, 6] },
-    { key: 'mwf', label: '월·수·금', days: [1, 3, 5] },
     { key: 'weekend', label: '주말만', days: [0, 6] }
   ];
   const SKINS = [
@@ -1305,12 +1312,13 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
 
   // week strip: seven buttons made once, patched on every render
   const dayBtns = [];
+  let stripSwipedAt = 0;
   for (let i = 0; i < 7; i++) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'day';
     b.innerHTML = '<span class="wd"></span><span class="dn"></span><span class="dot"></span>';
-    b.addEventListener('click', () => goTo(b.dataset.date));
+    b.addEventListener('click', () => { if (Date.now() - stripSwipedAt > 350) goTo(b.dataset.date); });
     dayBtns.push(b);
     $('days').appendChild(b);
   }
@@ -1644,8 +1652,64 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       $('tab-' + view).focus();
     });
   });
-  $('prevWeek').addEventListener('click', () => goTo(addDays(viewDate, -7)));
-  $('nextWeek').addEventListener('click', () => goTo(addDays(viewDate, 7)));
+  /* week strip swipe: drag sideways to go to the previous / next week */
+  const strip = $('strip');
+  const daysEl = $('days');
+  let sdrag = null;
+  function slideWeek(dir) { // dir 1 = next week (strip leaves to the left), -1 = previous week
+    const w = strip.offsetWidth;
+    daysEl.style.transform = 'translateX(' + (-dir * w) + 'px)';
+    daysEl.style.opacity = '0';
+    setTimeout(() => {
+      daysEl.classList.add('is-dragging');
+      goTo(addDays(viewDate, 7 * dir));
+      daysEl.style.transform = 'translateX(' + (dir * w) + 'px)';
+      void daysEl.offsetWidth; // apply the start position before animating back in
+      daysEl.classList.remove('is-dragging');
+      daysEl.style.transform = '';
+      daysEl.style.opacity = '';
+    }, 200);
+  }
+  strip.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    sdrag = { pid: e.pointerId, x0: e.clientX, y0: e.clientY, dx: 0, active: false };
+  });
+  strip.addEventListener('pointermove', (e) => {
+    if (!sdrag || e.pointerId !== sdrag.pid) return;
+    const dx = e.clientX - sdrag.x0;
+    const dy = e.clientY - sdrag.y0;
+    if (!sdrag.active) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dy) > Math.abs(dx)) { sdrag = null; return; } // vertical: let the page scroll
+      sdrag.active = true;
+      try { strip.setPointerCapture(e.pointerId); } catch (err) { /* already released */ }
+      daysEl.classList.add('is-dragging');
+    }
+    sdrag.dx = dx;
+    daysEl.style.transform = 'translateX(' + dx + 'px)';
+    daysEl.style.opacity = String(1 - Math.min(Math.abs(dx) / strip.offsetWidth, 0.6));
+  });
+  function endStripDrag(e) {
+    if (!sdrag || e.pointerId !== sdrag.pid) return;
+    const d = sdrag;
+    sdrag = null;
+    if (!d.active) return;
+    stripSwipedAt = Date.now();
+    daysEl.classList.remove('is-dragging');
+    if (e.type !== 'pointercancel' && Math.abs(d.dx) > Math.min(60, strip.offsetWidth * 0.18)) slideWeek(d.dx < 0 ? 1 : -1);
+    else { daysEl.style.transform = ''; daysEl.style.opacity = ''; }
+  }
+  strip.addEventListener('pointerup', endStripDrag);
+  strip.addEventListener('pointercancel', endStripDrag);
+  // Keyboard: ← → move a day, PageUp / PageDown a week.
+  strip.addEventListener('keydown', (e) => {
+    const n = { ArrowLeft: -1, ArrowRight: 1, PageUp: -7, PageDown: 7 }[e.key];
+    if (!n) return;
+    e.preventDefault();
+    goTo(addDays(viewDate, n));
+    const cur = dayBtns.find((b) => b.dataset.date === viewDate);
+    if (cur) cur.focus();
+  });
   $('goToday').addEventListener('click', () => goTo(todayStr));
 
   /* ---------- toast ---------- */
@@ -1827,6 +1891,30 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
 
   KINDS.forEach((k, i) => $('addKinds').appendChild(radioChip('aKind', k.key, k.label, 'kind k-' + k.key, i === 0)));
   PRESETS.forEach((p, i) => $('addRepeats').appendChild(radioChip('aRep', p.key, p.label, '', i === 0)));
+  $('addRepeats').appendChild(radioChip('aRep', 'custom', '요일 선택', '', false));
+  // [요일 선택]: a row of 월~일 toggles under the chips. Starts with the weekday being looked at.
+  let addDaySel = [];
+  const addDayBtns = MON_FIRST.map((wd) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip wday';
+    b.textContent = WD[wd];
+    b.setAttribute('aria-label', WD[wd] + '요일');
+    b.addEventListener('click', () => {
+      addDaySel = addDaySel.includes(wd) ? addDaySel.filter((x) => x !== wd) : addDaySel.concat(wd).sort();
+      syncAddDays();
+    });
+    $('addDays').appendChild(b);
+    return { b, wd };
+  });
+  function syncAddDays() {
+    const custom = checkedValue('aRep') === 'custom';
+    if (custom && !addDaySel.length && !$('addDays').dataset.touched) addDaySel = [weekday(viewDate)];
+    $('addDays').dataset.touched = custom ? '1' : '';
+    $('addDays').hidden = !custom;
+    addDayBtns.forEach(({ b, wd }) => b.setAttribute('aria-pressed', addDaySel.includes(wd) ? 'true' : 'false'));
+  }
+  $('addRepeats').addEventListener('change', syncAddDays);
 
   /* ---------- add ---------- */
   let newAlarmOn = false;
@@ -1863,9 +1951,11 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     const text = input.value.trim();
     if (!text) { input.focus(); return; }
     const preset = PRESETS.find((p) => p.key === checkedValue('aRep')) || PRESETS[0];
+    // 요일 선택 with nothing picked counts as 이날만.
+    const days = checkedValue('aRep') === 'custom' ? addDaySel.slice() : preset.days.slice();
     const t = {
       id: newId(), text, kind: checkedValue('aKind') || 'daily', date: viewDate,
-      days: preset.days.slice(), doneOn: [], createdAt: Date.now()
+      days, doneOn: [], createdAt: Date.now()
     };
     const time = $('newTime').value;
     if (!newAllDay && isHm(time)) t.time = time;
@@ -1874,7 +1964,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     if (t.alarm) { skipPastRings(t); askPermission(); }
     if (!occursOn(t, viewDate)) {
       const next = nextOccurrence(t, viewDate);
-      toast(preset.label + ' 반복이라 ' + shortDate(next) + '부터 보여요.');
+      toast(repeatLabel(days) + ' 반복이라 ' + shortDate(next) + '부터 보여요.');
     } else if (t.alarm) {
       const when = nextRingText(t);
       toast(when ? '알람도 맞췄어요. ' + when : '알람을 맞췄어요. 이 시간은 이미 지나서 다음부터 울려요.');
@@ -1883,6 +1973,8 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     newAlarmOn = false;
     setNewAllDay(true);
     setChecked('aRep', 'once');
+    addDaySel = [];
+    syncAddDays();
     render();
     input.focus();
   });
@@ -1891,16 +1983,28 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   const sheet = $('sheet');
   let sheetId = null;
   let sDays = [];
+  let sMode = 'once'; // 'once' | 'daily' | 'weekend' | 'custom'
+  const modeOf = (days) => (PRESETS.find((p) => sameDays(p.days, days)) || { key: 'custom' }).key;
   KINDS.forEach((k) => $('sKinds').appendChild(radioChip('sKind', k.key, k.label, 'kind k-' + k.key, false)));
   const presetBtns = PRESETS.map((p) => {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'chip';
     b.textContent = p.label;
-    b.addEventListener('click', () => { sDays = p.days.slice(); syncSheet(); });
+    b.addEventListener('click', () => { sMode = p.key; sDays = p.days.slice(); syncSheet(); });
     $('sPresets').appendChild(b);
     return b;
   });
+  const customBtn = document.createElement('button');
+  customBtn.type = 'button';
+  customBtn.className = 'chip';
+  customBtn.textContent = '요일 선택';
+  customBtn.addEventListener('click', () => {
+    if (sMode !== 'custom' && !sDays.length) sDays = [weekday(viewDate)];
+    sMode = 'custom';
+    syncSheet();
+  });
+  $('sPresets').appendChild(customBtn);
   const dayToggles = MON_FIRST.map((wd) => {
     const b = document.createElement('button');
     b.type = 'button';
@@ -1915,7 +2019,9 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     return { b, wd };
   });
   function syncSheet() {
-    PRESETS.forEach((p, i) => presetBtns[i].setAttribute('aria-pressed', sameDays(p.days, sDays) ? 'true' : 'false'));
+    PRESETS.forEach((p, i) => presetBtns[i].setAttribute('aria-pressed', sMode === p.key ? 'true' : 'false'));
+    customBtn.setAttribute('aria-pressed', sMode === 'custom' ? 'true' : 'false');
+    $('sDays').hidden = sMode !== 'custom';
     dayToggles.forEach(({ b, wd }) => b.setAttribute('aria-pressed', sDays.includes(wd) ? 'true' : 'false'));
     const rep = repeatLabel(sDays);
     $('sNote').textContent = !rep ? shortDate(viewDate) + ' 하루만 보여요. 못 끝내면 다음 날로 넘어가요.'
@@ -1955,6 +2061,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     syncSheetTime();
     setChecked('sKind', t.kind);
     sDays = t.days.slice();
+    sMode = modeOf(sDays);
     syncSheet();
     closeOpenRow();
     sheet.showModal();
