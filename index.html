@@ -567,7 +567,15 @@ button.wday { width: 40px; padding: 0; justify-content: center; }
 .tl-allday.is-target { outline: 2px dashed var(--pen); outline-offset: 2px; }
 .tl-head { margin: 0 0 6px; font-size: 0.875rem; font-weight: inherit; color: var(--ink-soft); }
 .tl-items { display: flex; flex-direction: column; gap: 6px; min-height: 40px; }
-.tl-hours { padding: 2px 10px; }
+/* The 24 hours scroll inside their own box, which opens at the current hour; earlier hours are above. */
+.tl-hours {
+  position: relative;
+  padding: 2px 10px;
+  max-height: max(320px, 58vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
 .tl-row { position: relative; display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 6px; min-height: 52px; border-top: 1px dashed var(--rule); }
 .tl-row:first-child { border-top: 0; }
 .tl-label { padding-top: 7px; font-size: 0.8125rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
@@ -884,7 +892,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
 
     <!-- 시간표: 날짜(제목)를 누르면 목록 대신 보인다 -->
     <div class="timeline" id="timeline" hidden>
-      <p class="tl-hint">할 일을 꾹 누르거나 ⠿를 잡고 끌면 시간을 옮길 수 있어요. 누르면 수정, 날짜를 다시 누르면 목록으로 돌아가요.</p>
+      <p class="tl-hint">할 일을 꾹 누르거나 ⠿를 잡고 끌면 시간을 옮길 수 있어요. 시간 상자를 위로 올리면 앞 시간이 나와요. 날짜를 다시 누르면 목록으로 돌아가요.</p>
       <section class="tl-allday box" id="tlAllDay" data-drop="allday" aria-labelledby="tlAllDayTitle">
         <h2 class="tl-head" id="tlAllDayTitle">하루 종일</h2>
         <div class="tl-items" id="tlAllDayItems"></div>
@@ -1559,6 +1567,8 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     reconcile($('tlAllDayItems'), allDay.length ? allDay : [tlAllDayEmpty]);
     tlRows.forEach((r, h) => reconcile(r.slot, hours[h]));
     placeNowLine();
+    // Re-aim the box when the time table opens or another day is picked — not after every change (e.g. a drop).
+    if (tlFocusedFor !== viewDate) { tlFocusedFor = viewDate; focusTimeline(); }
   }
   // A line at the current time, only on today's time table.
   function placeNowLine() {
@@ -1574,17 +1584,18 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   function setDayMode(m) {
     dayMode = m;
     try { localStorage.setItem('halil.dayMode', m); } catch (e) { /* not remembered */ }
+    tlFocusedFor = ''; // opening the time table always starts at the focus hour
     closeOpenRow();
     render();
-    if (m === 'time') scrollTimelineToFocus();
   }
-  // Open the time table near now (today) or near the first timed task (other days), else 08:00.
-  function scrollTimelineToFocus() {
+  // Scroll the hour box so the focus hour sits at its top: now (today), the first timed task (other days), else 08:00.
+  // A sliver of the hour before stays visible as a hint that earlier hours are above.
+  let tlFocusedFor = '';
+  function focusTimeline() {
     let h = 8;
     if (viewDate === todayStr) h = new Date().getHours();
     else { const first = itemsOn(viewDate).find((t) => t.time); if (first) h = Number(first.time.slice(0, 2)); }
-    const row = tlRows[Math.max(0, h - 1)].row;
-    window.scrollTo({ top: row.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+    $('tlHours').scrollTop = Math.max(0, tlRows[h].row.offsetTop - 12);
   }
   $('dayTitleBtn').addEventListener('click', () => setDayMode(dayMode === 'time' ? 'list' : 'time'));
 
@@ -1661,9 +1672,20 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   // Near the top or bottom edge, the page scrolls by itself so far-away hours can be reached.
   function tlAutoScroll() {
     if (!tl || !tl.active) return;
-    const edge = 72, h = window.innerHeight;
-    const v = tl.y < edge ? -Math.ceil((edge - tl.y) / 5) : tl.y > h - edge ? Math.ceil((tl.y - (h - edge)) / 5) : 0;
-    if (v) { window.scrollBy(0, v); moveTlGhost(); }
+    const box = $('tlHours').getBoundingClientRect();
+    const inBox = tl.x >= box.left && tl.x <= box.right && tl.y >= box.top - 30 && tl.y <= box.bottom + 30;
+    const edge = inBox ? 48 : 72;
+    const top = inBox ? Math.max(box.top, 0) : 0;
+    const bottom = inBox ? Math.min(box.bottom, window.innerHeight) : window.innerHeight;
+    const v = tl.y < top + edge ? -Math.ceil((top + edge - tl.y) / 5) : tl.y > bottom - edge ? Math.ceil((tl.y - (bottom - edge)) / 5) : 0;
+    if (v) {
+      const hours = $('tlHours');
+      const before = hours.scrollTop;
+      if (inBox) hours.scrollTop += v;
+      // Box already at its end (or pointer outside it): scroll the page instead.
+      if (!inBox || hours.scrollTop === before) window.scrollBy(0, v);
+      moveTlGhost();
+    }
     requestAnimationFrame(tlAutoScroll);
   }
   document.addEventListener('pointermove', (e) => {
