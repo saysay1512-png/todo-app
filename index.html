@@ -225,6 +225,23 @@ h1 {
   line-height: 1.15;
 }
 .panel-head { display: flex; flex-direction: column; gap: 12px; }
+/* The date title is a button: it switches the day view between the list and the time table. */
+.title-btn {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.title-icon { flex: none; width: 0.62em; height: 0.62em; color: var(--ink-soft); }
+.title-btn[aria-pressed="true"] .title-icon { color: var(--pen); }
 .btn-quiet, .chip span, button.chip {
   height: 36px;
   border: 1.5px solid var(--rule);
@@ -541,6 +558,50 @@ button.wday { width: 40px; padding: 0; justify-content: center; }
 .witem .wrep { flex: 0 0 auto; font-size: 0.75rem; opacity: 0.85; }
 .next-sec { margin-top: 6px; }
 .next-date { font-size: 0.8125rem; color: var(--ink-soft); }
+/* Day view: time table */
+#viewDay.is-timeline #addForm, #viewDay.is-timeline #exampleNotice, #viewDay.is-timeline #list,
+#viewDay.is-timeline #nextSec, #viewDay.is-timeline .foot { display: none !important; }
+.timeline { display: flex; flex-direction: column; gap: 12px; }
+.tl-hint { margin: 0; font-size: 0.8125rem; color: var(--ink-soft); }
+.tl-allday { padding: 8px 10px 10px; }
+.tl-allday.is-target { outline: 2px dashed var(--pen); outline-offset: 2px; }
+.tl-head { margin: 0 0 6px; font-size: 0.875rem; font-weight: inherit; color: var(--ink-soft); }
+.tl-items { display: flex; flex-direction: column; gap: 6px; min-height: 40px; }
+.tl-hours { padding: 2px 10px; }
+.tl-row { position: relative; display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 6px; min-height: 52px; border-top: 1px dashed var(--rule); }
+.tl-row:first-child { border-top: 0; }
+.tl-label { padding-top: 7px; font-size: 0.8125rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.tl-row.is-now .tl-label { color: var(--pen); font-weight: 700; }
+.tl-slot { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-radius: 12px; }
+.tl-row.is-target .tl-slot { background: var(--pen-wash); box-shadow: inset 0 0 0 2px var(--pen); }
+.tl-now { position: absolute; left: 46px; right: 0; height: 2px; background: var(--pen); pointer-events: none; z-index: 1; }
+.tl-now::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--pen); }
+.tl-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 40px;
+  padding: 2px 2px 2px 2px;
+  background: var(--k);
+  color: var(--ki);
+  border: var(--card-border);
+  border-radius: min(var(--card-radius), 14px);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.tl-item .check { flex-basis: 36px; height: 36px; }
+.tl-item .check i { width: 20px; height: 20px; border-width: 2px; }
+.tl-item .check svg { width: 12px; height: 12px; }
+.tl-time { flex: none; margin-right: 6px; font-size: 0.8125rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tl-item .text { flex: 1; min-width: 0; font-size: 0.9375rem; }
+.tl-grip { flex: 0 0 34px; height: 36px; display: grid; place-items: center; font-size: 1.125rem; opacity: 0.7; cursor: grab; touch-action: none; }
+.tl-item.is-done { opacity: 0.55; }
+.tl-item.is-lifted { opacity: 0.25; }
+.tl-ghost { position: fixed; z-index: 30; margin: 0; pointer-events: none; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22); transform: rotate(-1.5deg) scale(1.03); }
+body.is-tl-dragging, body.is-tl-dragging * { cursor: grabbing !important; user-select: none; -webkit-user-select: none; }
 .wempty { margin: 0; padding: 0 2px 2px; font-size: 0.875rem; color: var(--ink-soft); }
 
 /* Month */
@@ -767,7 +828,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   <section class="panel" id="viewDay" role="tabpanel" aria-labelledby="tab-day">
     <div class="panel-head">
       <div class="title-row">
-        <h1 id="dayTitle">오늘</h1>
+        <h1><button type="button" class="title-btn" id="dayTitleBtn" aria-pressed="false"><span id="dayTitle">오늘</span><svg class="title-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 6v4.3l2.8 1.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h1>
         <button type="button" class="btn-quiet" id="goToday" hidden>오늘로</button>
       </div>
       <p class="strip-month" id="stripMonth" aria-live="polite"></p>
@@ -820,6 +881,16 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       <p id="hint">할 일을 왼쪽으로 밀면 수정·지우기가 나오고, 한 번 더 밀면 바로 지워져요. 오른쪽으로 밀면 알람이 나와요. 못 끝낸 일은 다음 날로 넘어가요.</p>
       <p>적은 내용은 이 브라우저에 자동으로 저장돼요.</p>
     </footer>
+
+    <!-- 시간표: 날짜(제목)를 누르면 목록 대신 보인다 -->
+    <div class="timeline" id="timeline" hidden>
+      <p class="tl-hint">할 일을 꾹 누르거나 ⠿를 잡고 끌면 시간을 옮길 수 있어요. 누르면 수정, 날짜를 다시 누르면 목록으로 돌아가요.</p>
+      <section class="tl-allday box" id="tlAllDay" data-drop="allday" aria-labelledby="tlAllDayTitle">
+        <h2 class="tl-head" id="tlAllDayTitle">하루 종일</h2>
+        <div class="tl-items" id="tlAllDayItems"></div>
+      </section>
+      <div class="tl-hours box" id="tlHours" role="list" aria-label="시간대별 할 일"></div>
+    </div>
   </section>
 
   <!-- 일주일 -->
@@ -1400,8 +1471,239 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
 
     $('hint').hidden = !items.length;
     renderNextDay();
+    const timeMode = dayMode === 'time';
+    $('viewDay').classList.toggle('is-timeline', timeMode);
+    $('timeline').hidden = !timeMode;
+    $('dayTitleBtn').setAttribute('aria-pressed', timeMode ? 'true' : 'false');
+    $('dayTitleBtn').setAttribute('aria-label', $('dayTitle').textContent + '. ' + (timeMode ? '목록으로 보기' : '시간표로 보기'));
+    $('dayTitleBtn').title = timeMode ? '눌러서 목록으로 보기' : '눌러서 시간표로 보기';
+    if (timeMode) renderTimeline();
     $('exampleNotice').hidden = !(loaded && tasks.some((t) => t.example));
   }
+
+  /* ---------- day view: time table (tap the date title) ----------
+     24 hour rows (00:00–23:00), the day's timed tasks in their hour, untimed ones in "하루 종일".
+     Dragging a task to another row changes its hour (minutes kept); into 하루 종일 removes the time. */
+  let dayMode = 'list';
+  try { if (localStorage.getItem('halil.dayMode') === 'time') dayMode = 'time'; } catch (e) { /* list */ }
+  const tlRows = [];
+  for (let h = 0; h < 24; h++) {
+    const row = document.createElement('div');
+    row.className = 'tl-row';
+    row.dataset.drop = String(h);
+    row.setAttribute('role', 'listitem');
+    const label = document.createElement('span');
+    label.className = 'tl-label';
+    label.textContent = pad(h) + ':00';
+    const slot = document.createElement('div');
+    slot.className = 'tl-slot';
+    row.append(label, slot);
+    $('tlHours').appendChild(row);
+    tlRows.push({ row, slot });
+  }
+  const nowLine = document.createElement('div');
+  nowLine.className = 'tl-now';
+  nowLine.setAttribute('aria-hidden', 'true');
+  const tlAllDayEmpty = document.createElement('p');
+  tlAllDayEmpty.className = 'wempty';
+  tlAllDayEmpty.textContent = '시간 없는 일이 없어요. 여기로 끌어 오면 시간을 빼요.';
+  const tlItems = new Map(); // id -> element, reused between renders
+  function createTlItem(t) {
+    const el = document.createElement('div');
+    el.className = 'tl-item';
+    el.dataset.id = t.id;
+    el.tabIndex = 0;
+    el.setAttribute('role', 'button');
+    const check = document.createElement('button');
+    check.type = 'button';
+    check.className = 'check';
+    check.setAttribute('role', 'checkbox');
+    check.innerHTML = ICON_CHECK;
+    const time = document.createElement('span');
+    time.className = 'tl-time';
+    const text = document.createElement('span');
+    text.className = 'text';
+    const grip = document.createElement('span');
+    grip.className = 'tl-grip';
+    grip.textContent = '⠿';
+    grip.setAttribute('aria-hidden', 'true');
+    el.append(check, time, text, grip);
+    el._refs = { check, time, text };
+    return el;
+  }
+  function patchTlItem(el, t) {
+    const done = isDone(t, viewDate);
+    setKind(el, t.kind);
+    el.classList.toggle('is-done', done);
+    el._refs.check.setAttribute('aria-checked', done ? 'true' : 'false');
+    el._refs.check.setAttribute('aria-label', (done ? '완료 취소: ' : '완료 표시: ') + t.text);
+    const tm = t.time || '';
+    if (el._refs.time.textContent !== tm) el._refs.time.textContent = tm;
+    el._refs.time.hidden = !tm;
+    if (el._refs.text.textContent !== t.text) el._refs.text.textContent = t.text;
+    el.setAttribute('aria-label', (tm || '하루 종일') + ', ' + t.text + '. 눌러서 수정');
+  }
+  function renderTimeline() {
+    const items = loaded ? itemsOn(viewDate) : [];
+    const allDay = [];
+    const hours = tlRows.map(() => []);
+    const seen = new Set();
+    items.forEach((t) => {
+      let el = tlItems.get(t.id);
+      if (!el) { el = createTlItem(t); tlItems.set(t.id, el); }
+      patchTlItem(el, t);
+      seen.add(t.id);
+      if (t.time) hours[Number(t.time.slice(0, 2))].push(el); else allDay.push(el);
+    });
+    tlItems.forEach((el, id) => { if (!seen.has(id)) tlItems.delete(id); });
+    reconcile($('tlAllDayItems'), allDay.length ? allDay : [tlAllDayEmpty]);
+    tlRows.forEach((r, h) => reconcile(r.slot, hours[h]));
+    placeNowLine();
+  }
+  // A line at the current time, only on today's time table.
+  function placeNowLine() {
+    const show = dayMode === 'time' && viewDate === todayStr && view === 'day';
+    const now = new Date();
+    tlRows.forEach((r, h) => r.row.classList.toggle('is-now', show && h === now.getHours()));
+    if (!show) { nowLine.remove(); return; }
+    const row = tlRows[now.getHours()].row;
+    if (nowLine.parentNode !== row) row.appendChild(nowLine);
+    nowLine.style.top = (now.getMinutes() / 60 * 100) + '%';
+  }
+  setInterval(placeNowLine, 60000);
+  function setDayMode(m) {
+    dayMode = m;
+    try { localStorage.setItem('halil.dayMode', m); } catch (e) { /* not remembered */ }
+    closeOpenRow();
+    render();
+    if (m === 'time') scrollTimelineToFocus();
+  }
+  // Open the time table near now (today) or near the first timed task (other days), else 08:00.
+  function scrollTimelineToFocus() {
+    let h = 8;
+    if (viewDate === todayStr) h = new Date().getHours();
+    else { const first = itemsOn(viewDate).find((t) => t.time); if (first) h = Number(first.time.slice(0, 2)); }
+    const row = tlRows[Math.max(0, h - 1)].row;
+    window.scrollTo({ top: row.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+  }
+  $('dayTitleBtn').addEventListener('click', () => setDayMode(dayMode === 'time' ? 'list' : 'time'));
+
+  // Same rules as the edit sheet: an alarm that follows the task's time moves with it.
+  function setTaskTime(t, time) {
+    const n = Object.assign({}, t);
+    if (time) n.time = time; else delete n.time;
+    if (n.alarm && n.alarm.follow) n.alarm = time ? Object.assign({}, n.alarm, { time }) : Object.assign({}, n.alarm, { follow: false });
+    put(n);
+    if (n.alarm) skipPastRings(n);
+    return n;
+  }
+
+  let tlDraggedAt = 0;
+  const timeline = $('timeline');
+  timeline.addEventListener('click', (e) => {
+    if (Date.now() - tlDraggedAt < 400) return; // the click that ends a drag
+    const item = e.target.closest('.tl-item');
+    if (!item) return;
+    const t = byId(item.dataset.id);
+    if (!t) return;
+    if (e.target.closest('.check')) { toggleOn(t, viewDate); render(); return; }
+    openSheet(t.id);
+  });
+  timeline.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('tl-item')) {
+      e.preventDefault();
+      openSheet(e.target.dataset.id);
+    }
+  });
+  timeline.addEventListener('contextmenu', (e) => { if (e.target.closest('.tl-item')) e.preventDefault(); });
+
+  /* drag: mouse = press and move; finger = hold 0.35s (or grab ⠿) then move */
+  let tl = null;
+  timeline.addEventListener('pointerdown', (e) => {
+    const item = e.target.closest('.tl-item');
+    if (!item || e.target.closest('.check')) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    tl = { item, id: item.dataset.id, pid: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY,
+      mouse: e.pointerType === 'mouse', active: false, timer: 0, target: null };
+    if (e.target.closest('.tl-grip')) { e.preventDefault(); startTlDrag(); }
+    else if (!tl.mouse) tl.timer = setTimeout(startTlDrag, 350);
+  });
+  function startTlDrag() {
+    if (!tl || tl.active) return;
+    tl.active = true;
+    const r = tl.item.getBoundingClientRect();
+    const ghost = tl.item.cloneNode(true);
+    ghost.classList.add('tl-ghost');
+    ghost.removeAttribute('tabindex');
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.style.width = r.width + 'px';
+    tl.offX = tl.x - r.left;
+    tl.offY = tl.y - r.top;
+    tl.ghost = ghost;
+    document.body.appendChild(ghost);
+    tl.item.classList.add('is-lifted');
+    document.body.classList.add('is-tl-dragging');
+    try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) { /* no vibration */ }
+    moveTlGhost();
+    requestAnimationFrame(tlAutoScroll);
+  }
+  function moveTlGhost() {
+    tl.ghost.style.left = (tl.x - tl.offX) + 'px';
+    tl.ghost.style.top = (tl.y - tl.offY) + 'px';
+    const hit = document.elementFromPoint(tl.x, tl.y);
+    const target = hit ? hit.closest('#timeline [data-drop]') : null;
+    if (target !== tl.target) {
+      if (tl.target) tl.target.classList.remove('is-target');
+      tl.target = target;
+      if (target) target.classList.add('is-target');
+    }
+  }
+  // Near the top or bottom edge, the page scrolls by itself so far-away hours can be reached.
+  function tlAutoScroll() {
+    if (!tl || !tl.active) return;
+    const edge = 72, h = window.innerHeight;
+    const v = tl.y < edge ? -Math.ceil((edge - tl.y) / 5) : tl.y > h - edge ? Math.ceil((tl.y - (h - edge)) / 5) : 0;
+    if (v) { window.scrollBy(0, v); moveTlGhost(); }
+    requestAnimationFrame(tlAutoScroll);
+  }
+  document.addEventListener('pointermove', (e) => {
+    if (!tl || e.pointerId !== tl.pid) return;
+    tl.x = e.clientX;
+    tl.y = e.clientY;
+    if (!tl.active) {
+      const moved = Math.hypot(tl.x - tl.x0, tl.y - tl.y0);
+      if (tl.mouse && moved > 5) startTlDrag();
+      else if (!tl.mouse && moved > 8) { clearTimeout(tl.timer); tl = null; } // finger moved first: it's a scroll
+      return;
+    }
+    moveTlGhost();
+  });
+  // Once a drag has started, keep the page from scrolling under the finger.
+  document.addEventListener('touchmove', (e) => { if (tl && tl.active) e.preventDefault(); }, { passive: false });
+  function endTlDrag(e) {
+    if (!tl || e.pointerId !== tl.pid) return;
+    const d = tl;
+    tl = null;
+    clearTimeout(d.timer);
+    if (!d.active) return;
+    tlDraggedAt = Date.now();
+    d.ghost.remove();
+    d.item.classList.remove('is-lifted');
+    document.body.classList.remove('is-tl-dragging');
+    if (d.target) d.target.classList.remove('is-target');
+    if (e.type === 'pointercancel' || !d.target) return;
+    const t = byId(d.id);
+    if (!t) return;
+    const drop = d.target.dataset.drop;
+    const time = drop === 'allday' ? '' : pad(Number(drop)) + ':' + (t.time ? t.time.slice(3) : '00');
+    if ((t.time || '') === time) return;
+    setTaskTime(t, time);
+    render();
+    toast((time ? time + '로 옮겼어요.' : '하루 종일로 옮겼어요.') + (t.days.length ? ' 반복하는 날 모두 바뀌어요.' : ''),
+      '되돌리기', () => { put(Object.assign({}, t)); if (t.alarm) skipPastRings(t); render(); });
+  }
+  document.addEventListener('pointerup', endTlDrag);
+  document.addEventListener('pointercancel', endTlDrag);
 
   /* ---------- day view: the next day's tasks under the list ---------- */
   const nItems = new Map(); // "date|id" -> element
