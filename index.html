@@ -325,7 +325,16 @@ h1 {
   border-radius: var(--box-radius);
   box-shadow: var(--box-shadow);
 }
-.add .opts:first-of-type { margin-top: -4px; }
+/* Add sheet: 시간 / 종류 / 반복 each stay on one line — same text size, tighter spacing.
+   A very narrow phone can still slide a row sideways instead of wrapping it. */
+#addForm .opts { flex-wrap: nowrap; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+#addForm .opts::-webkit-scrollbar { display: none; }
+#addForm .opt-label { flex: 0 0 2rem; }
+#addForm .chip, #addForm .time-wrap { flex: none; }
+#addForm .chip span, #addForm button.chip { padding: 0 9px; }
+#addForm .kind span { gap: 4px; padding: 0 7px; }
+#addForm .kind span::before { width: 8px; height: 8px; }
+#addForm .time-in { height: 36px; border-radius: 18px; padding: 0 8px; font-size: 0.9375rem; }
 .fab {
   position: fixed;
   right: max(16px, calc((100vw - 36rem) / 2 + 16px));
@@ -2387,6 +2396,16 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   }
   $('addOpen').addEventListener('click', openAddSheet);
   $('addCancel').addEventListener('click', () => addSheet.close());
+  // Phones: after typing, a tap anywhere else in the sheet (a chip, empty space) puts the keyboard away,
+  // and the keyboard's 완료 key only closes the keyboard instead of adding right away.
+  const coarsePointer = window.matchMedia('(pointer: coarse)');
+  [addSheet, $('sheet')].forEach((dlg) => dlg.addEventListener('click', (e) => {
+    const a = document.activeElement;
+    if (a && a.matches('input[type="text"]') && !e.target.closest('input[type="text"]')) a.blur();
+  }));
+  [$('newText'), $('sText')].forEach((input) => input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.isComposing && coarsePointer.matches) { e.preventDefault(); input.blur(); }
+  }));
   addSheet.addEventListener('click', (e) => { if (e.target === addSheet) addSheet.close(); });
 
   /* ---------- settings sheet ---------- */
