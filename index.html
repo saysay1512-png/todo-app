@@ -45,6 +45,7 @@
   --k-daily: #CFF0D7; --k-important: #FFD5D3; --k-out: #D3E5FF; --k-etc: #E6DBFF;
   --ki-daily: #1E5A34; --ki-important: #962B29; --ki-out: #1E4C8E; --ki-etc: #4F3598;
   --kd-daily: #3FAE67; --kd-important: #EE5A63; --kd-out: #4A8FE2; --kd-etc: #9676E0;
+  --k-exercise: #FFE2C2; --ki-exercise: #8A4B12; --kd-exercise: #F2994A;
   --card-radius: 22px; --card-border: 0 solid transparent; --card-shadow: 0 4px 0 rgba(217, 150, 140, 0.28); --room: 0 0 4px;
   --box-radius: 24px; --box-border: 0 solid transparent; --box-shadow: 0 4px 0 rgba(217, 150, 140, 0.22);
   --font-display: "Jua", "Malgun Gothic", sans-serif; --font-body: "Jua", "Malgun Gothic", sans-serif;
@@ -68,6 +69,7 @@
   --k-daily: #7EE0A0; --k-important: #FF8B8B; --k-out: #80BDFF; --k-etc: #C3A2FF;
   --ki-daily: #1B1B1B; --ki-important: #1B1B1B; --ki-out: #1B1B1B; --ki-etc: #1B1B1B;
   --kd-daily: #22B85E; --kd-important: #F04848; --kd-out: #2F8CFF; --kd-etc: #9161FF;
+  --k-exercise: #FFC27A; --ki-exercise: #1B1B1B; --kd-exercise: #FF9A2E;
   --card-radius: 16px; --card-border: 2.5px solid #1B1B1B; --card-shadow: 4px 4px 0 #1B1B1B; --room: 0 5px 5px 0;
   --box-radius: 18px; --box-border: 2.5px solid #1B1B1B; --box-shadow: 4px 4px 0 #1B1B1B;
   --font-display: "Do Hyeon", "Malgun Gothic", sans-serif; --font-body: "Do Hyeon", "Malgun Gothic", sans-serif;
@@ -92,6 +94,7 @@
   --k-daily: #DCF2C7; --k-important: #FFD1C8; --k-out: #CDE4F6; --k-etc: #E7D9F4;
   --ki-daily: #2E571D; --ki-important: #8A2C1D; --ki-out: #214E77; --ki-etc: #573983;
   --kd-daily: #67BA42; --kd-important: #E86650; --kd-out: #4A96D2; --kd-etc: #9C77CE;
+  --k-exercise: #FFE3BF; --ki-exercise: #7F4614; --kd-exercise: #E8913D;
   --card-radius: 6px; --card-border: 0 solid transparent; --card-shadow: 0 2px 0 rgba(62, 50, 41, 0.1), 0 3px 6px rgba(62, 50, 41, 0.08); --room: 9px 3px 6px;
   --box-radius: 10px; --box-border: 1px solid #E6DBC8; --box-shadow: 0 2px 0 rgba(62, 50, 41, 0.06);
   --font-display: "Gaegu", "Malgun Gothic", cursive; --font-body: "Gaegu", "Malgun Gothic", cursive;
@@ -119,6 +122,7 @@
   --k-out: linear-gradient(165deg, #3A80EA, #1D52B8); --k-etc: linear-gradient(165deg, #8565F0, #5531C4);
   --ki-daily: #FFFFFF; --ki-important: #FFFFFF; --ki-out: #FFFFFF; --ki-etc: #FFFFFF;
   --kd-daily: #2BAE6C; --kd-important: #EF4D55; --kd-out: #3A86F5; --kd-etc: #8A63F5;
+  --k-exercise: linear-gradient(165deg, #D9741C, #AE520A); --ki-exercise: #FFFFFF; --kd-exercise: #F08A2C;
   --card-radius: 26px; --card-border: 0 solid transparent; --card-shadow: 0 5px 0 rgba(70, 40, 160, 0.16); --room: 0 0 5px;
   --box-radius: 26px; --box-border: 0 solid transparent; --box-shadow: 0 5px 0 rgba(70, 40, 160, 0.08);
   --font-display: "Jua", "Malgun Gothic", sans-serif; --font-body: "Jua", "Malgun Gothic", sans-serif;
@@ -143,6 +147,7 @@
   --k-daily: #A9E7C2; --k-important: #FFB6B6; --k-out: #AACDFF; --k-etc: #CEBAFF;
   --ki-daily: #123D27; --ki-important: #6B1A1A; --ki-out: #14325E; --ki-etc: #33206B;
   --kd-daily: #6FD69B; --kd-important: #FF8080; --kd-out: #7DB2FF; --kd-etc: #B394FF;
+  --k-exercise: #FFD3A8; --ki-exercise: #5C2C05; --kd-exercise: #FFAE66;
   --card-radius: 18px; --card-border: 0 solid transparent; --card-shadow: 0 0 14px -4px rgba(255, 214, 107, 0.0); --room: 0;
   --box-radius: 20px; --box-border: 1px solid #343E6A; --box-shadow: none;
   --font-display: "Hi Melody", "Malgun Gothic", cursive; --font-body: "Gowun Dodum", "Malgun Gothic", sans-serif;
@@ -156,6 +161,7 @@
 .k-important { --k: var(--k-important); --ki: var(--ki-important); --kd: var(--kd-important); }
 .k-out { --k: var(--k-out); --ki: var(--ki-out); --kd: var(--kd-out); }
 .k-etc { --k: var(--k-etc); --ki: var(--ki-etc); --kd: var(--kd-etc); }
+.k-exercise { --k: var(--k-exercise); --ki: var(--ki-exercise); --kd: var(--kd-exercise); }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -319,7 +325,26 @@ h1 {
   border-radius: var(--box-radius);
   box-shadow: var(--box-shadow);
 }
-.add { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.add .opts:first-of-type { margin-top: -4px; }
+.fab {
+  position: fixed;
+  right: max(16px, calc((100vw - 36rem) / 2 + 16px));
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  z-index: 9;
+  height: 56px;
+  padding: 0 22px 0 16px;
+  border: var(--box-border);
+  border-radius: 28px;
+  background: var(--pen);
+  color: var(--on-pen);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: var(--box-shadow), 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+.fab svg { width: 22px; height: 22px; }
 .add-row { display: flex; gap: 8px; }
 .add-row input {
   flex: 1;
@@ -849,25 +874,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       <div class="bar" aria-hidden="true"><span id="dBarFill"></span></div>
     </div>
 
-    <form class="add box" id="addForm" autocomplete="off">
-      <div class="add-row">
-        <label class="sr" for="newText">새 할 일</label>
-        <input id="newText" type="text" placeholder="할 일을 적어 주세요" maxlength="200" enterkeyhint="done">
-        <button type="submit" class="btn-primary">추가</button>
-      </div>
-      <div class="opts" role="group" aria-labelledby="newTimeLabel">
-        <span class="opt-label" id="newTimeLabel">시간</span>
-        <button type="button" class="chip" id="newAllDay" aria-pressed="true">하루 종일</button>
-        <span class="time-wrap">
-          <input id="newTime" type="time" class="time-in" aria-label="시간 고르기" disabled>
-          <button type="button" class="time-cover" id="newTimeCover" aria-label="시간 정하기"></button>
-        </span>
-        <button type="button" class="chip" id="newAlarm" aria-pressed="false" disabled>⏰ 알람</button>
-      </div>
-      <fieldset class="opts" id="addKinds"><legend class="sr">종류</legend><span class="opt-label" aria-hidden="true">종류</span></fieldset>
-      <fieldset class="opts" id="addRepeats"><legend class="sr">반복</legend><span class="opt-label" aria-hidden="true">반복</span></fieldset>
-      <div class="wdays add-days" id="addDays" role="group" aria-label="반복할 요일" hidden></div>
-    </form>
+    <button type="button" class="fab" id="addOpen"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>추가</button>
 
     <div class="notice" id="exampleNotice" hidden>
       <p>예시로 넣어 둔 일이 있어요. 왼쪽으로 밀어 수정해 본 뒤 지우면 됩니다.</p>
@@ -933,7 +940,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       <div class="cal-grid" id="calGrid"></div>
     </div>
     <ul class="legend" aria-label="색 설명">
-      <li class="k-daily">일상</li><li class="k-important">중요</li><li class="k-out">외출</li><li class="k-etc">기타</li><li class="lg-clear">모두 끝낸 날</li>
+      <li class="k-daily">일상</li><li class="k-important">중요</li><li class="k-out">외출</li><li class="k-exercise">운동</li><li class="k-etc">기타</li><li class="lg-clear">모두 끝낸 날</li>
     </ul>
     <p class="foot" style="margin:0">날짜를 누르면 그날 할 일 목록으로 가요.</p>
   </section>
@@ -1047,6 +1054,34 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   </div>
 </dialog>
 
+<dialog class="sheet" id="addSheet" aria-labelledby="addTitle">
+  <form class="add" id="addForm" autocomplete="off">
+    <h2 id="addTitle">할 일 추가</h2>
+    <p class="sub" id="addFor"></p>
+    <div class="field">
+      <label for="newText">할 일</label>
+      <input id="newText" type="text" placeholder="할 일을 적어 주세요" maxlength="200" enterkeyhint="done">
+    </div>
+      <div class="opts" role="group" aria-labelledby="newTimeLabel">
+        <span class="opt-label" id="newTimeLabel">시간</span>
+        <button type="button" class="chip" id="newAllDay" aria-pressed="true">하루 종일</button>
+        <span class="time-wrap">
+          <input id="newTime" type="time" class="time-in" aria-label="시간 고르기" disabled>
+          <button type="button" class="time-cover" id="newTimeCover" aria-label="시간 정하기"></button>
+        </span>
+        <button type="button" class="chip" id="newAlarm" aria-pressed="false" disabled>⏰ 알람</button>
+      </div>
+      <fieldset class="opts" id="addKinds"><legend class="sr">종류</legend><span class="opt-label" aria-hidden="true">종류</span></fieldset>
+      <fieldset class="opts" id="addRepeats"><legend class="sr">반복</legend><span class="opt-label" aria-hidden="true">반복</span></fieldset>
+      <div class="wdays add-days" id="addDays" role="group" aria-label="반복할 요일" hidden></div>
+    <div class="sheet-foot">
+      <span class="spacer"></span>
+      <button type="button" class="btn-quiet" id="addCancel">취소</button>
+      <button type="submit" class="btn-primary">추가</button>
+    </div>
+  </form>
+</dialog>
+
 <div class="toast" id="toast" role="status" hidden>
   <span id="toastMsg"></span>
   <button type="button" id="toastAct" hidden></button>
@@ -1075,10 +1110,11 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     { key: 'daily', label: '일상' },
     { key: 'important', label: '중요' },
     { key: 'out', label: '외출' },
+    { key: 'exercise', label: '운동' },
     { key: 'etc', label: '기타' }
   ];
   const KIND_LABEL = Object.fromEntries(KINDS.map((k) => [k.key, k.label]));
-  const KIND_ORDER = { important: 0, out: 1, daily: 2, etc: 3 };
+  const KIND_ORDER = { important: 0, out: 1, exercise: 2, daily: 3, etc: 4 };
   const PRESETS = [
     { key: 'once', label: '이날만', days: [] },
     { key: 'daily', label: '매일', days: [0, 1, 2, 3, 4, 5, 6] },
@@ -1204,7 +1240,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     const now = Date.now();
     return [
       { id: 'ex1', text: '관리비 내기', kind: 'important', date: todayStr, days: [], doneOn: [], createdAt: now - 6, example: true },
-      { id: 'ex2', text: '헬스장 가기', kind: 'out', date: todayStr, days: [1, 3, 5], doneOn: [], createdAt: now - 5, example: true,
+      { id: 'ex2', text: '헬스장 가기', kind: 'exercise', date: todayStr, days: [1, 3, 5], doneOn: [], createdAt: now - 5, example: true,
         time: '19:00', alarm: { on: true, time: '19:00', before: 10, days: [], sound: 'ding', snooze: 5, follow: true } },
       { id: 'ex3', text: '물 2리터 마시기', kind: 'daily', date: todayStr, days: [0, 1, 2, 3, 4, 5, 6], doneOn: [], createdAt: now - 4, example: true },
       { id: 'ex4', text: '방 청소하기', kind: 'daily', date: todayStr, days: [0, 6], doneOn: [], createdAt: now - 3, example: true },
@@ -1465,7 +1501,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
         seen.add(t.id);
       });
       if (!items.length) {
-        emptyEl.textContent = '이날 할 일이 없어요. 위 칸에 적고 추가를 눌러 보세요.';
+        emptyEl.textContent = '이날 할 일이 없어요. 아래 [+ 추가]를 눌러 적어 보세요.';
         desired.push(emptyEl);
       }
     }
@@ -2335,9 +2371,23 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     setChecked('aRep', 'once');
     addDaySel = [];
     syncAddDays();
+    addSheet.close();
     render();
-    input.focus();
   });
+
+  // The add form lives in a sheet opened by the floating [+ 추가] button; it adds to the day being looked at.
+  const addSheet = $('addSheet');
+  function openAddSheet() {
+    closeOpenRow();
+    const rel = relWord(viewDate);
+    $('addFor').textContent = shortDate(viewDate) + (rel ? ' · ' + rel : '') + '에 추가해요';
+    syncAddDays();
+    addSheet.showModal();
+    $('newText').focus();
+  }
+  $('addOpen').addEventListener('click', openAddSheet);
+  $('addCancel').addEventListener('click', () => addSheet.close());
+  addSheet.addEventListener('click', (e) => { if (e.target === addSheet) addSheet.close(); });
 
   /* ---------- settings sheet ---------- */
   const sheet = $('sheet');
