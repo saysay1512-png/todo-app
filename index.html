@@ -197,7 +197,11 @@ button { cursor: pointer; }
 /* Top: name, skin button, view tabs */
 .top { display: flex; flex-direction: column; gap: 12px; }
 .top-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.brand { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.125rem; color: var(--ink-soft); }
+.brand { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.125rem; color: var(--ink-soft); }
+.brand-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.album-btn { display: inline-flex; align-items: center; gap: 5px; padding-left: 10px; }
+.album-btn svg { width: 17px; height: 17px; }
+.album-btn[aria-pressed="true"] { background: var(--pen); border-color: var(--pen); color: var(--on-pen); font-weight: 700; }
 .tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -799,6 +803,36 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
 .sheet-foot .spacer { flex: 1; }
 .btn-danger { border-color: var(--red) !important; color: var(--red); background: transparent; }
 
+/* Album: one photo a day per chapter, on a calendar */
+.chapters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.chapter { height: 42px; border: 0; border-radius: 999px; background: none; color: var(--ink-soft); font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.chapter[aria-selected="true"] { background: var(--pen); color: var(--on-pen); font-weight: 700; }
+.ch-no { width: 22px; height: 22px; line-height: 22px; border-radius: 50%; font-size: 0.75rem; font-weight: 700; background: var(--pen-wash); color: var(--pen); }
+.chapter[aria-selected="true"] .ch-no { background: var(--on-pen); color: var(--pen); }
+.album-grid { gap: 4px; }
+.acell {
+  --on-photo: #FFFFFF;
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 3 / 4;
+  border: 0;
+  padding: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--pen-wash);
+  font-variant-numeric: tabular-nums;
+}
+.acell.is-other { opacity: 0.35; }
+.acell:disabled { background: none; cursor: default; color: var(--ink-soft); }
+.acell.is-today { outline: 2px solid var(--pen); outline-offset: 1px; }
+.athumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.anum { position: absolute; left: 5px; top: 3px; z-index: 1; font-size: 0.75rem; line-height: 1.2; }
+.acell.is-today .anum { color: var(--pen); font-weight: 700; }
+.acell.is-sat .anum { color: var(--kd-out); }
+.acell.is-sun .anum, .acell.is-hol .anum { color: var(--kd-important); }
+.acell.has-photo .anum { color: var(--on-photo); font-weight: 700; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+.acell:not(.has-photo):not(:disabled)::after { content: "+"; position: absolute; inset: 0; display: grid; place-items: center; padding-top: 8px; font-size: 1.25rem; color: var(--pen); opacity: 0.55; }
+.photo-big { display: block; width: 100%; max-height: 62dvh; object-fit: contain; border-radius: 14px; background: var(--paper); }
 .btn-pref { display: inline-flex; align-items: center; gap: 5px; padding-left: 10px; }
 .btn-pref svg { width: 17px; height: 17px; }
 .pref-sec { display: flex; flex-direction: column; gap: 12px; }
@@ -891,7 +925,10 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
 <main class="app" id="app">
   <header class="top">
     <div class="top-row">
-      <p class="brand" id="brand">할 일 수첩</p>
+      <div class="brand-row">
+        <p class="brand" id="brand">할 일 수첩</p>
+        <button type="button" class="btn-quiet album-btn" id="albumBtn" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4.5" width="14" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="7.5" cy="8.5" r="1.4" fill="currentColor"/><path d="M3.8 14l4-3.6 2.8 2.4 2.2-1.8 3.4 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>앨범</button>
+      </div>
       <button type="button" class="btn-quiet btn-pref" id="prefBtn"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>설정</button>
     </div>
     <div class="tabs" role="tablist" aria-label="보기">
@@ -966,6 +1003,25 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       <button type="button" class="btn-quiet" id="wThisWeek" style="align-self:flex-start" hidden>이번 주로</button>
     </div>
     <div class="wlist-days" id="weekList"></div>
+  </section>
+
+  <!-- 앨범: 하루 한 장, 챕터 두 개 -->
+  <section class="panel" id="viewAlbum" aria-labelledby="albumTitle" hidden>
+    <div class="tabs chapters" id="chapterTabs" role="tablist" aria-label="앨범 챕터"></div>
+    <div class="panel-head">
+      <div class="title-row">
+        <button type="button" class="nav-btn" id="aPrev" aria-label="지난달"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <h1 id="albumTitle" style="text-align:center">이번 달</h1>
+        <button type="button" class="nav-btn" id="aNext" aria-label="다음 달"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="tally" aria-live="polite"><strong id="albumCount">&nbsp;</strong><span>날짜를 누르면 사진을 올려요</span></div>
+      <button type="button" class="btn-quiet" id="aThisMonth" style="align-self:flex-start" hidden>이번 달로</button>
+    </div>
+    <div class="cal box">
+      <div class="cal-wd" aria-hidden="true"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
+      <div class="cal-grid album-grid" id="albumGrid"></div>
+    </div>
+    <p class="foot" style="margin:0">사진은 이 휴대폰(브라우저) 안에만 저장되고 다른 곳으로 올라가지 않아요. 사진이 있는 날을 누르면 크게 보고 바꾸거나 지울 수 있어요.</p>
   </section>
 
   <!-- 한달 -->
@@ -1127,6 +1183,21 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     </div>
   </form>
 </dialog>
+
+<dialog class="sheet" id="photoSheet" aria-labelledby="photoTitle">
+  <div class="sheet-body">
+    <h2 id="photoTitle"></h2>
+    <p class="sub" id="photoSub"></p>
+    <img class="photo-big" id="photoBig" alt="">
+    <div class="sheet-foot">
+      <button type="button" class="btn-quiet btn-danger" id="photoDel">지우기</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn-quiet" id="photoChange">사진 바꾸기</button>
+      <button type="button" class="btn-primary" id="photoDone">닫기</button>
+    </div>
+  </div>
+</dialog>
+<input type="file" id="albumFile" accept="image/*" hidden>
 
 <div class="toast" id="toast" role="status" hidden>
   <span id="toastMsg"></span>
@@ -1292,7 +1363,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
 
   try {
     const v = localStorage.getItem(LS_VIEW);
-    if (v === 'day' || v === 'week' || v === 'month') view = v;
+    if (v === 'day' || v === 'week' || v === 'month' || v === 'album') view = v;
   } catch (e) { /* storage unavailable */ }
 
   const byId = (id) => tasks.find((t) => t.id === id);
@@ -2128,6 +2199,279 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   $('mNext').addEventListener('click', () => shiftMonth(1));
   $('mThisMonth').addEventListener('click', () => { viewDate = todayStr; render(); });
 
+  /* ---------- album: one photo a day for each chapter, kept in this browser (IndexedDB) ---------- */
+  const LS_ALBUM_CH = 'halil.albumCh';
+  const CHAPTERS = [{ key: '1', name: '나유준' }, { key: '2', name: '나은유' }];
+  const chapterName = (ch) => (CHAPTERS.find((c) => c.key === ch) || CHAPTERS[0]).name;
+  let albumCh = CHAPTERS[0].key;
+  try { const c = localStorage.getItem(LS_ALBUM_CH); if (CHAPTERS.some((x) => x.key === c)) albumCh = c; } catch (e) { /* default */ }
+  let albumMonth = todayStr.slice(0, 8) + '01';
+  let prevView = 'day';
+
+  // Two stores: small thumbnails for the calendar, full-size pictures opened one at a time.
+  // Keys are "chapter|YYYY-MM-DD", so one month of one chapter is a single key range.
+  let dbPromise = null;
+  function albumDb() {
+    if (!dbPromise) dbPromise = new Promise((res, rej) => {
+      const r = indexedDB.open('halil-album', 1);
+      r.onupgradeneeded = () => {
+        r.result.createObjectStore('thumbs', { keyPath: 'key' });
+        r.result.createObjectStore('full', { keyPath: 'key' });
+      };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => { dbPromise = null; rej(r.error); };
+    });
+    return dbPromise;
+  }
+  const idbReq = (q) => new Promise((res, rej) => { q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  const idbDone = (tx) => new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = tx.onabort = () => rej(tx.error); });
+  const photoKey = (ch, d) => ch + '|' + d;
+  const thumbUrls = new Map(); // key -> object URL of the thumbnail
+  const loadedRanges = new Set();
+  function setThumb(key, blob) {
+    if (thumbUrls.has(key)) URL.revokeObjectURL(thumbUrls.get(key));
+    if (blob) thumbUrls.set(key, URL.createObjectURL(blob)); else thumbUrls.delete(key);
+  }
+  // Resolves true when it read something new.
+  async function loadThumbs(ch, from, to) {
+    const id = ch + from + to;
+    if (loadedRanges.has(id)) return false;
+    const db = await albumDb();
+    const recs = await idbReq(db.transaction('thumbs').objectStore('thumbs').getAll(IDBKeyRange.bound(photoKey(ch, from), photoKey(ch, to))));
+    recs.forEach((r) => { if (!thumbUrls.has(r.key)) setThumb(r.key, r.thumb); });
+    loadedRanges.add(id);
+    return true;
+  }
+
+  // Photos are shrunk before saving (phone pictures are several MB): full size up to 2048px, thumbnail 360px.
+  function loadImage(file) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => res({ img, url });
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('not an image')); };
+      img.src = url;
+    });
+  }
+  function toJpeg(img, max, quality) {
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(img.naturalWidth * k));
+    c.height = Math.max(1, Math.round(img.naturalHeight * k));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('encode'))), 'image/jpeg', quality));
+  }
+  async function putPhoto(thumbRec, fullRec) {
+    const db = await albumDb();
+    const tx = db.transaction(['thumbs', 'full'], 'readwrite');
+    tx.objectStore('thumbs').put(thumbRec);
+    tx.objectStore('full').put(fullRec);
+    await idbDone(tx);
+    setThumb(thumbRec.key, thumbRec.thumb);
+    if (view === 'album') paintAlbum();
+  }
+  async function savePhoto(ch, d, file) {
+    toast('사진을 넣는 중이에요…');
+    try {
+      const { img, url } = await loadImage(file);
+      let full, thumb;
+      try {
+        full = await toJpeg(img, 2048, 0.88);
+        thumb = await toJpeg(img, 360, 0.8);
+      } finally { URL.revokeObjectURL(url); }
+      const key = photoKey(ch, d);
+      await putPhoto({ key, ch, date: d, thumb, addedAt: Date.now() }, { key, blob: full });
+      // Ask the browser not to clear the album when space runs low.
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      toast(chapterName(ch) + ' · ' + shortDate(d) + ' 사진을 넣었어요.');
+    } catch (e) {
+      toast(e && e.name === 'QuotaExceededError' ? '저장 공간이 모자라 사진을 넣지 못했어요.' : '사진을 넣지 못했어요. 다른 사진으로 해 보세요.');
+    }
+  }
+  async function deletePhoto(ch, d) {
+    const key = photoKey(ch, d);
+    try {
+      const db = await albumDb();
+      const rt = db.transaction(['thumbs', 'full']);
+      const [t, f] = await Promise.all([idbReq(rt.objectStore('thumbs').get(key)), idbReq(rt.objectStore('full').get(key))]);
+      const tx = db.transaction(['thumbs', 'full'], 'readwrite');
+      tx.objectStore('thumbs').delete(key);
+      tx.objectStore('full').delete(key);
+      await idbDone(tx);
+      setThumb(key, null);
+      if (view === 'album') paintAlbum();
+      toast(shortDate(d) + ' 사진을 지웠어요.', '되돌리기', () => { if (t && f) putPhoto(t, f).catch(() => {}); });
+    } catch (e) {
+      toast('사진을 지우지 못했어요.');
+    }
+  }
+
+  // Picking: the file input opens the phone's photo library (no camera-only "capture").
+  let pickFor = null;
+  function pickPhoto(ch, d) {
+    pickFor = { ch, d };
+    const f = $('albumFile');
+    f.value = '';
+    f.click();
+  }
+  $('albumFile').addEventListener('change', () => {
+    const file = $('albumFile').files[0];
+    const p = pickFor;
+    pickFor = null;
+    if (file && p) savePhoto(p.ch, p.d, file);
+  });
+
+  const photoSheet = $('photoSheet');
+  let photoOpen = null; // { ch, d, url }
+  async function openPhoto(ch, d) {
+    try {
+      const db = await albumDb();
+      const rec = await idbReq(db.transaction('full').objectStore('full').get(photoKey(ch, d)));
+      if (!rec) return;
+      const url = URL.createObjectURL(rec.blob);
+      photoOpen = { ch, d, url };
+      $('photoBig').src = url;
+      $('photoBig').alt = chapterName(ch) + ' ' + shortDate(d) + ' 사진';
+      $('photoTitle').textContent = shortDate(d);
+      $('photoSub').textContent = chapterName(ch);
+      photoSheet.showModal();
+    } catch (e) {
+      toast('사진을 열지 못했어요.');
+    }
+  }
+  photoSheet.addEventListener('close', () => {
+    if (photoOpen) URL.revokeObjectURL(photoOpen.url);
+    $('photoBig').removeAttribute('src');
+    photoOpen = null;
+  });
+  $('photoDone').addEventListener('click', () => photoSheet.close());
+  photoSheet.addEventListener('click', (e) => { if (e.target === photoSheet) photoSheet.close(); });
+  $('photoChange').addEventListener('click', () => {
+    const p = photoOpen;
+    photoSheet.close();
+    if (p) pickPhoto(p.ch, p.d);
+  });
+  $('photoDel').addEventListener('click', () => {
+    const p = photoOpen;
+    photoSheet.close();
+    if (p) deletePhoto(p.ch, p.d);
+  });
+
+  const chapterBtns = CHAPTERS.map((c) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chapter';
+    b.setAttribute('role', 'tab');
+    b.dataset.ch = c.key;
+    const no = document.createElement('span');
+    no.className = 'ch-no';
+    no.textContent = c.key;
+    b.append(no, c.name);
+    b.addEventListener('click', () => {
+      albumCh = c.key;
+      try { localStorage.setItem(LS_ALBUM_CH, albumCh); } catch (e) { /* not remembered */ }
+      renderAlbum();
+    });
+    $('chapterTabs').appendChild(b);
+    return b;
+  });
+
+  const aCells = [];
+  for (let i = 0; i < 42; i++) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'acell';
+    const img = document.createElement('img');
+    img.className = 'athumb';
+    img.alt = '';
+    img.hidden = true;
+    const num = document.createElement('span');
+    num.className = 'anum';
+    num.setAttribute('aria-hidden', 'true');
+    b.append(img, num);
+    b.addEventListener('click', () => {
+      const d = b.dataset.date;
+      if (!d || !loadedRanges.has(b._range)) return; // thumbnails not read yet: don't risk replacing a photo
+      if (thumbUrls.has(photoKey(albumCh, d))) openPhoto(albumCh, d);
+      else pickPhoto(albumCh, d);
+    });
+    b._refs = { img, num };
+    aCells.push(b);
+    $('albumGrid').appendChild(b);
+  }
+  function albumRange() {
+    const d = parseYmd(albumMonth);
+    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const start = mondayOf(albumMonth);
+    const weeks = Math.ceil((dayDiff(albumMonth, start) + lastDay) / 7);
+    return { start, weeks, end: addDays(start, weeks * 7 - 1) };
+  }
+  function paintAlbum() {
+    const d = parseYmd(albumMonth);
+    const y = d.getFullYear(), m = d.getMonth();
+    const { start, weeks, end } = albumRange();
+    const range = albumCh + start + end;
+    $('albumTitle').textContent = y + '년 ' + (m + 1) + '월';
+    $('brand').textContent = '할 일 수첩 · 앨범';
+    $('aThisMonth').hidden = albumMonth === todayStr.slice(0, 8) + '01';
+    chapterBtns.forEach((b) => {
+      const on = b.dataset.ch === albumCh;
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+    });
+    let count = 0;
+    aCells.forEach((b, i) => {
+      if (i >= weeks * 7) { b.hidden = true; return; }
+      b.hidden = false;
+      const s = addDays(start, i);
+      const cd = parseYmd(s);
+      const inMonth = cd.getMonth() === m;
+      const url = thumbUrls.get(photoKey(albumCh, s));
+      if (url && inMonth) count++;
+      const hol = holidayOf(s);
+      b.dataset.date = s;
+      b._range = range;
+      b.disabled = s > todayStr; // no photos for days still to come
+      b.classList.toggle('is-other', !inMonth);
+      b.classList.toggle('is-today', s === todayStr);
+      b.classList.toggle('has-photo', !!url);
+      b.classList.toggle('is-sat', cd.getDay() === 6);
+      b.classList.toggle('is-sun', cd.getDay() === 0);
+      b.classList.toggle('is-hol', !!hol);
+      b._refs.num.textContent = cd.getDate();
+      const img = b._refs.img;
+      if (url) { if (img.getAttribute('src') !== url) img.src = url; img.hidden = false; }
+      else { img.removeAttribute('src'); img.hidden = true; }
+      b.setAttribute('aria-label', (cd.getMonth() + 1) + '월 ' + cd.getDate() + '일 ' + WD[cd.getDay()] + '요일' +
+        (s === todayStr ? ', 오늘' : '') + (url ? ', 사진 있음. 크게 보기' : s > todayStr ? '' : ', 사진 올리기'));
+    });
+    $('albumCount').textContent = chapterName(albumCh) + ' · 이번 달 사진 ' + count + '장';
+  }
+  function renderAlbum() {
+    paintAlbum();
+    const { start, end } = albumRange();
+    const ch = albumCh;
+    loadThumbs(ch, start, end).then((fresh) => {
+      if (fresh && view === 'album' && ch === albumCh) paintAlbum();
+    }).catch(() => toast('앨범을 열지 못했어요. 이 브라우저에서는 사진을 저장할 수 없어요.'));
+  }
+  function shiftAlbumMonth(n) {
+    const d = parseYmd(albumMonth);
+    albumMonth = ymd(new Date(d.getFullYear(), d.getMonth() + n, 1));
+    renderAlbum();
+  }
+  $('aPrev').addEventListener('click', () => shiftAlbumMonth(-1));
+  $('aNext').addEventListener('click', () => shiftAlbumMonth(1));
+  $('aThisMonth').addEventListener('click', () => { albumMonth = todayStr.slice(0, 8) + '01'; renderAlbum(); });
+  // The 앨범 button next to the name opens the album; pressing it again goes back to the list you were on.
+  $('albumBtn').addEventListener('click', () => {
+    if (view === 'album') setView(prevView);
+    else { prevView = view; setView('album'); }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    render();
+    if (view === 'week') scrollWeekToDay();
+  });
+
   /* ---------- render ---------- */
   function syncToday() {
     const nowStr = ymd(new Date());
@@ -2147,8 +2491,11 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     $('viewWeek').hidden = view !== 'week';
     $('app').classList.toggle('is-week', view === 'week');
     $('viewMonth').hidden = view !== 'month';
+    $('viewAlbum').hidden = view !== 'album';
+    $('albumBtn').setAttribute('aria-pressed', view === 'album' ? 'true' : 'false');
     if (view === 'day') renderDay();
     else if (view === 'week') renderWeek();
+    else if (view === 'album') renderAlbum();
     else renderMonth();
   }
   function setView(v) {
@@ -3110,7 +3457,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   prefSheet.addEventListener('click', (e) => { if (e.target === prefSheet) prefSheet.close(); });
 
   /* ---------- sheets: the page behind stays put; pull a sheet down from its top to close it ---------- */
-  const allSheets = ['sheet', 'prefSheet', 'alarmSheet', 'addSheet', 'ringSheet'].map($);
+  const allSheets = ['sheet', 'prefSheet', 'alarmSheet', 'addSheet', 'ringSheet', 'photoSheet'].map($);
   let lockY = null;
   function syncPageLock() {
     const anyOpen = allSheets.some((d) => d.open);
@@ -3128,7 +3475,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   allSheets.forEach((d) => new MutationObserver(syncPageLock).observe(d, { attributes: true, attributeFilter: ['open'] }));
 
   // The ringing alarm is left out: it must be answered with its buttons.
-  ['sheet', 'prefSheet', 'alarmSheet', 'addSheet'].map($).forEach((dlg) => {
+  ['sheet', 'prefSheet', 'alarmSheet', 'addSheet', 'photoSheet'].map($).forEach((dlg) => {
     const grip = document.createElement('div');
     grip.className = 'sheet-grip';
     grip.setAttribute('aria-hidden', 'true');

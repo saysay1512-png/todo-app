@@ -92,6 +92,14 @@
     (시간을 뒤로 바꾸면 키가 달라져 다시 울린다).
   - 화면 밖 알림은 서비스 워커가 있으면 `showNotification`으로 보낸다(안드로이드 크롬은 이 방법만 된다).
   - 한계: 푸시 서버가 없어서 **앱이 열려 있을 때만** 울린다. 다시 알림 예약은 메모리에만 있다.
+- 앨범: 맨 위 "할 일 수첩" 이름 바로 옆 [앨범] 버튼(`#albumBtn`)을 누르면 앨범 화면(`#viewAlbum`, `view === 'album'`)이 열린다.
+  탭(날/일주일/한달)을 누르거나 [앨범]을 다시 누르면 보던 화면(`prevView`)으로 돌아간다.
+  - 챕터 2개(`CHAPTERS`): 1 나유준, 2 나은유. 챕터마다 하루에 사진 한 장. 고른 챕터는 `halil.albumCh`에 기억한다.
+  - 달력 모양(월요일 시작). 사진 있는 날은 칸에 사진(작은 그림)이 꽉 차고, 빈 날은 "+". 앞으로 올 날은 누를 수 없다.
+    빈 날을 누르면 휴대폰 사진 앨범이 열려(`<input type="file" accept="image/*">`, `capture` 없음) 고른 사진이 그날에 들어간다.
+    사진 있는 날을 누르면 크게 보는 창(`#photoSheet`)에서 [사진 바꾸기] / [지우기](되돌리기 가능).
+  - 사진은 넣기 전에 줄인다: 큰 사진 긴 변 2048px, 달력용 작은 사진 360px, 둘 다 JPEG(`toJpeg()`).
+  - 앨범 달(`albumMonth`)은 할 일 화면의 `viewDate`와 따로 움직인다.
 - 창(시트) 공통: 창이 열려 있으면 뒤 페이지를 고정한다(`body.is-locked`, 열림은 `MutationObserver`로 감지, 닫으면 원래 스크롤 위치로).
   맨 위 손잡이(`.sheet-grip`)가 있고, 창이 맨 위까지 올라가 있을 때 아래로 끌어내리면 닫힌다(창 높이 30% 또는 140px 이상, 또는 빠르게 튕기기).
   손가락은 창 어디서든, 마우스는 손잡이를 끈다. 알람이 울리는 창(`#ringSheet`)은 버튼으로만 닫는다.
@@ -102,7 +110,11 @@
 
 ## 데이터
 
-- 브라우저 `localStorage`에 저장한다. 키: `halil.tasks`(목록), `halil.view`(마지막 탭), `halil.skin`(꾸미기), `halil.dayMode`(날 화면 목록/시간표), `halil.alarmFired`(이미 울린 알람 → 시각, 3일 지나면 지움).
+- 브라우저 `localStorage`에 저장한다. 키: `halil.tasks`(목록), `halil.view`(마지막 탭, "album" 포함), `halil.albumCh`(앨범 챕터), `halil.skin`(꾸미기), `halil.dayMode`(날 화면 목록/시간표), `halil.alarmFired`(이미 울린 알람 → 시각, 3일 지나면 지움).
+- 앨범 사진은 `localStorage`가 아니라 **IndexedDB** `halil-album`(버전 1)에 둔다. 저장소 두 개, 키는 `"챕터|YYYY-MM-DD"`:
+  `thumbs` `{ key, ch, date, thumb: Blob, addedAt }`(달력용), `full` `{ key, blob: Blob }`(크게 보기용).
+  한 달은 키 범위 하나로 읽는다(`loadThumbs()`). 처음 저장할 때 `navigator.storage.persist()`를 요청한다.
+  사진은 이 기기 브라우저에만 있다. 사이트 데이터를 지우거나 앱을 지우면 사라진다.
 - 할 일 한 건의 모양:
   `{ id, text, kind, date, days, doneOn, createdAt, time?, from?, alarm?, example? }`
   - `kind`: `"daily"`(일상) | `"important"`(중요) | `"out"`(외출) | `"exercise"`(운동) | `"etc"`(기타)
