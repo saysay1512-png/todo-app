@@ -273,6 +273,7 @@ h1 {
 
 /* Day: week strip */
 /* The strip follows the finger sideways; letting go past a little way slides to the next/previous week. */
+.day-hol { margin: -8px 0 0; font-size: 0.875rem; font-weight: 700; color: var(--kd-important); }
 .strip-month { margin: 0 0 -8px; font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1rem; color: var(--ink-soft); }
 .strip { flex: 1; min-width: 0; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 /* 21 days in a row (7 spare on each side) so dragging never shows a gap; the middle 7 are on screen
@@ -297,6 +298,9 @@ h1 {
 }
 .day .wd { font-size: 0.75rem; color: var(--ink-soft); }
 .day .dn { font-size: 1.0625rem; }
+/* Saturday blue, Sunday and public holidays red (today / the chosen day keep their own colour) */
+.day.is-sat .wd, .day.is-sat .dn { color: var(--kd-out); }
+.day.is-sun .wd, .day.is-sun .dn, .day.is-hol .wd, .day.is-hol .dn { color: var(--kd-important); }
 .day .dot { width: 5px; height: 5px; border-radius: 50%; }
 .day.has-open .dot { background: var(--ink-soft); }
 .day.is-today .dn { color: var(--pen); }
@@ -567,7 +571,9 @@ button.wday { width: 40px; padding: 0; justify-content: center; }
   border-radius: 10px;
 }
 .wdate { font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.125rem; }
-.wsec.is-weekend .wdate .wdn { color: var(--kd-important); }
+.wsec.is-sat .wdate .wdn { color: var(--kd-out); }
+.wsec.is-sun .wdate .wdn, .wsec.is-hol .wdate .wdn { color: var(--kd-important); }
+.whol { margin-left: 6px; font-family: var(--font-body); font-weight: 700; font-size: 0.8125rem; color: var(--kd-important); }
 .wbadge { font-size: 0.75rem; background: var(--pen); color: var(--on-pen); border-radius: 999px; padding: 1px 8px; }
 .wcount { margin-left: auto; font-size: 0.8125rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .wcount::after { content: " ›"; }
@@ -667,17 +673,25 @@ body.is-tl-dragging, body.is-tl-dragging * { cursor: grabbing !important; user-s
 }
 .mcell.is-other { opacity: 0.35; }
 .mnum { width: 26px; height: 26px; line-height: 26px; border-radius: 50%; font-size: 0.875rem; text-align: center; }
+.mcell.is-sat .mnum { color: var(--kd-out); }
+.mcell.is-sun .mnum, .mcell.is-hol .mnum { color: var(--kd-important); }
 .mcell.is-today .mnum { background: var(--pen); color: var(--on-pen); }
 .mcell.is-sel { background: var(--pen-wash); }
+/* Past days: the more of that day's list was finished, the deeper the fill (--fill is set per cell) */
+.mcell.is-filled { background: color-mix(in srgb, var(--pen) var(--fill), transparent); }
+.mcell.is-filled.is-sel { box-shadow: inset 0 0 0 2px var(--pen); }
 .mdots { display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: 3px; max-width: 32px; min-height: 7px; }
 .mdot { width: 7px; height: 7px; border-radius: 50%; background: var(--kd); }
 .mdot.is-done { opacity: 0.35; }
 .mmore { font-size: 0.625rem; line-height: 1; color: var(--ink-soft); }
 .mclear { font-size: 0.75rem; line-height: 1; color: var(--pen); }
-@media (hover: hover) { .mcell:hover:not(.is-sel) { background: var(--pen-wash); } }
+@media (hover: hover) { .mcell:hover:not(.is-sel):not(.is-filled) { background: var(--pen-wash); } }
+.mhols { margin: 0; padding: 0 4px; font-size: 0.8125rem; color: var(--ink-soft); }
+.mhols b { color: var(--kd-important); }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8125rem; color: var(--ink-soft); margin: 0; padding: 0 4px; list-style: none; }
 .legend li { display: inline-flex; align-items: center; gap: 6px; }
 .legend li::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--kd); }
+.legend .lg-fill::before { width: 22px; height: 11px; border-radius: 4px; background: linear-gradient(90deg, color-mix(in srgb, var(--pen) 14%, transparent), color-mix(in srgb, var(--pen) 55%, transparent)); }
 .legend .lg-clear::before { content: "★"; width: auto; height: auto; background: none; color: var(--pen); font-size: 0.75rem; }
 
 /* Sheets (settings, skin picker) */
@@ -692,8 +706,17 @@ body.is-tl-dragging, body.is-tl-dragging * { cursor: grabbing !important; user-s
   background: var(--sheet);
   color: var(--ink);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  transition: transform 0.2s ease;
 }
+.sheet.is-pulling { transition: none; }
 .sheet::backdrop { background: var(--backdrop); }
+/* Handle at the top of a sheet: pull down from the top to close it */
+.sheet-grip { position: sticky; top: 0; z-index: 2; height: 22px; display: flex; justify-content: center; align-items: flex-end; background: var(--sheet); cursor: grab; touch-action: none; }
+.sheet-grip::before { content: ""; width: 42px; height: 5px; border-radius: 3px; background: var(--rule); }
+.sheet-grip + form, .sheet-grip + .sheet-body { padding-top: 8px; }
+/* While a sheet is open the page behind stays put */
+body.is-locked { position: fixed; left: 0; right: 0; overflow: hidden; }
 @media (min-width: 600px) { .sheet { margin: auto; border-radius: var(--box-radius); } }
 .sheet form, .sheet .sheet-body {
   display: flex;
@@ -873,6 +896,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
         <h1><button type="button" class="title-btn" id="dayTitleBtn" aria-pressed="false"><span id="dayTitle">오늘</span><svg class="title-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 6v4.3l2.8 1.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h1>
         <button type="button" class="btn-quiet" id="goToday" hidden>오늘로</button>
       </div>
+      <p class="day-hol" id="dayHol" hidden></p>
       <p class="strip-month" id="stripMonth" aria-live="polite"></p>
       <div class="title-row">
         <div class="strip" id="strip" role="group" aria-label="날짜 고르기. 옆으로 밀면 다른 날짜를 볼 수 있어요. 누르면 그날로 가요">
@@ -949,8 +973,9 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       <div class="cal-grid" id="calGrid"></div>
     </div>
     <ul class="legend" aria-label="색 설명">
-      <li class="k-daily">일상</li><li class="k-important">중요</li><li class="k-out">외출</li><li class="k-exercise">운동</li><li class="k-etc">기타</li><li class="lg-clear">모두 끝낸 날</li>
+      <li class="k-daily">일상</li><li class="k-important">중요</li><li class="k-out">외출</li><li class="k-exercise">운동</li><li class="k-etc">기타</li><li class="lg-clear">모두 끝낸 날</li><li class="lg-fill">지난날: 많이 끝낼수록 진하게</li>
     </ul>
+    <p class="mhols" id="mHols" hidden></p>
     <p class="foot" style="margin:0">날짜를 누르면 그날 할 일 목록으로 가요.</p>
   </section>
 </main>
@@ -1148,6 +1173,62 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   const isYmd = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
   let todayStr = ymd(new Date());
   let viewDate = todayStr;
+
+  /* ---------- Korean public holidays ---------- */
+  // Lunar holidays (설날, 부처님오신날, 추석) have no simple formula, so their solar dates are listed per year.
+  const LUNAR_HOLS = {
+    2024: { seol: '02-10', buddha: '05-15', chuseok: '09-17' },
+    2025: { seol: '01-29', buddha: '05-05', chuseok: '10-06' },
+    2026: { seol: '02-17', buddha: '05-24', chuseok: '09-25' },
+    2027: { seol: '02-07', buddha: '05-13', chuseok: '09-15' },
+    2028: { seol: '01-27', buddha: '05-02', chuseok: '10-03' },
+    2029: { seol: '02-13', buddha: '05-20', chuseok: '09-22' },
+    2030: { seol: '02-03', buddha: '05-09', chuseok: '09-12' }
+  };
+  // One-off days off (elections, temporary holidays)
+  const EXTRA_HOLS = {
+    '2024-04-10': '국회의원 선거', '2024-10-01': '임시공휴일', '2025-01-27': '임시공휴일',
+    '2025-06-03': '대통령 선거', '2026-06-03': '지방선거', '2028-04-12': '국회의원 선거'
+  };
+  const holCache = new Map();
+  function holidaysOf(y) {
+    if (holCache.has(y)) return holCache.get(y);
+    const names = new Map(); // date -> [names]
+    const add = (d, name) => names.set(d, (names.get(d) || []).concat(name));
+    const subOk = new Set(); // days whose holiday moves to a weekday when it falls on a weekend
+    const block = new Set(); // 설날 / 추석 three-day breaks: only a Sunday (or another holiday) moves them
+    const fixed = [['01-01', '신정', 0], ['03-01', '삼일절', 1], ['05-05', '어린이날', 1], ['06-06', '현충일', 0],
+      ['08-15', '광복절', 1], ['10-03', '개천절', 1], ['10-09', '한글날', 1], ['12-25', '성탄절', 1]];
+    if (y >= 2026) fixed.push(['05-01', '노동절', 0], ['07-17', '제헌절', 1]);
+    fixed.forEach(([md, name, sub]) => { const d = y + '-' + md; add(d, name); if (sub) subOk.add(d); });
+    const L = LUNAR_HOLS[y];
+    if (L) {
+      [[L.seol, '설날'], [L.chuseok, '추석']].forEach(([md, name]) => {
+        const mid = y + '-' + md;
+        [addDays(mid, -1), mid, addDays(mid, 1)].forEach((d) => { add(d, name); block.add(d); });
+      });
+      const b = y + '-' + L.buddha;
+      add(b, '부처님오신날');
+      subOk.add(b);
+    }
+    Object.keys(EXTRA_HOLS).forEach((d) => { if (d.startsWith(y + '-')) add(d, EXTRA_HOLS[d]); });
+    // 대체공휴일: each day that "loses" a holiday gives the next weekday that is not already a day off.
+    const lost = [...names.keys()].sort().filter((d) => {
+      const wd = weekday(d);
+      if (names.get(d).length > 1) return true;
+      if (block.has(d)) return wd === 0;
+      return subOk.has(d) && (wd === 0 || wd === 6);
+    });
+    lost.forEach((d) => {
+      let c = addDays(d, 1);
+      while (weekday(c) === 0 || weekday(c) === 6 || names.has(c)) c = addDays(c, 1);
+      add(c, '대체공휴일');
+    });
+    const out = new Map([...names].map(([d, n]) => [d, [...new Set(n)].join(', ')]));
+    holCache.set(y, out);
+    return out;
+  }
+  const holidayOf = (s) => holidaysOf(+s.slice(0, 4)).get(s) || '';
 
   function shortDate(s) {
     const d = parseYmd(s);
@@ -1480,9 +1561,13 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       b.children[1].textContent = d.getDate();
       b.classList.toggle('is-today', s === todayStr);
       b.classList.toggle('has-open', open > 0);
+      const hol = holidayOf(s);
+      b.classList.toggle('is-sat', d.getDay() === 6);
+      b.classList.toggle('is-sun', d.getDay() === 0);
+      b.classList.toggle('is-hol', !!hol);
       b.setAttribute('aria-pressed', s === viewDate ? 'true' : 'false');
       b.setAttribute('aria-label', (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + WD[d.getDay()] + '요일' +
-        (s === todayStr ? ', 오늘' : '') + (open ? ', 남은 일 ' + open + '개' : ''));
+        (hol ? ', ' + hol : '') + (s === todayStr ? ', 오늘' : '') + (open ? ', 남은 일 ' + open + '개' : ''));
     });
   }
 
@@ -1490,6 +1575,9 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     const d = parseYmd(viewDate);
     const rel = relWord(viewDate);
     $('dayTitle').textContent = (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + WD[d.getDay()] + '요일';
+    const hol = holidayOf(viewDate);
+    $('dayHol').textContent = hol;
+    $('dayHol').hidden = !hol;
     $('brand').textContent = '할 일 수첩' + (rel ? ' · ' + rel : '');
     renderStrip();
 
@@ -1880,13 +1968,22 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       dn.className = 'wdn';
       dn.textContent = WD[d.getDay()];
       w.date.append((d.getMonth() + 1) + '월 ' + d.getDate() + '일 ', dn);
+      const hol = holidayOf(s);
+      if (hol) {
+        const hn = document.createElement('span');
+        hn.className = 'whol';
+        hn.textContent = hol;
+        w.date.append(hn);
+      }
       const rel = relWord(s);
       w.badge.textContent = rel;
       w.badge.hidden = !rel;
       w.count.textContent = items.length ? doneN + '/' + items.length : '';
       w.head.setAttribute('aria-label', shortDate(s) + (rel ? ', ' + rel : '') + ', ' +
         (items.length ? items.length + '개 중 ' + doneN + '개 완료' : '할 일 없음') + '. 이날 목록 보기');
-      w.sec.classList.toggle('is-weekend', d.getDay() === 0 || d.getDay() === 6);
+      w.sec.classList.toggle('is-sat', d.getDay() === 6);
+      w.sec.classList.toggle('is-sun', d.getDay() === 0);
+      w.sec.classList.toggle('is-hol', !!hol);
       w.sec.classList.toggle('is-sel', s === todayStr);
 
       const desired = items.map((t) => wItemFor(wItems, seen, s, t));
@@ -1908,7 +2005,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   $('nextSec').addEventListener('click', onSmallCardClick);
   $('wPrev').addEventListener('click', () => { viewDate = addDays(viewDate, -7); render(); });
   $('wNext').addEventListener('click', () => { viewDate = addDays(viewDate, 7); render(); });
-  $('wThisWeek').addEventListener('click', () => { viewDate = todayStr; render(); });
+  $('wThisWeek').addEventListener('click', () => { viewDate = todayStr; render(); scrollWeekToDay(); });
 
   /* ---------- month view ---------- */
   const mCells = [];
@@ -1941,6 +2038,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     $('mThisMonth').hidden = isThis;
 
     let total = 0, doneAll = 0;
+    const hols = [];
     mCells.forEach((b, i) => {
       if (i >= weeks * 7) { b.hidden = true; return; }
       b.hidden = false;
@@ -1956,8 +2054,18 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       b.classList.toggle('is-today', s === todayStr);
       b.classList.toggle('is-sel', s === viewDate && s !== todayStr);
       b._refs.num.textContent = cd.getDate();
+      const hol = holidayOf(s);
+      if (hol && inMonth) hols.push([cd.getDate(), hol]);
+      b.classList.toggle('is-sat', cd.getDay() === 6);
+      b.classList.toggle('is-sun', cd.getDay() === 0);
+      b.classList.toggle('is-hol', !!hol);
+      // Past days fill deeper the more of their list was finished.
+      const filled = s < todayStr && doneN > 0;
+      b.classList.toggle('is-filled', filled);
+      if (filled) b.style.setProperty('--fill', Math.round(14 + 41 * doneN / items.length) + '%');
+      else b.style.removeProperty('--fill');
       b.setAttribute('aria-label', (cd.getMonth() + 1) + '월 ' + cd.getDate() + '일 ' + WD[cd.getDay()] + '요일' +
-        (s === todayStr ? ', 오늘' : '') + ', ' + (items.length ? items.length + '개 중 ' + doneN + '개 완료' : '할 일 없음'));
+        (hol ? ', ' + hol : '') + (s === todayStr ? ', 오늘' : '') + ', ' + (items.length ? items.length + '개 중 ' + doneN + '개 완료' : '할 일 없음'));
 
       const key = clear ? 'clear' : items.map((t) => t.kind + (isDone(t, s) ? '1' : '0')).join(',');
       if (key === b._refs.key) return;
@@ -1984,6 +2092,18 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
       }
     });
     setTally('m', total, doneAll, '이번 달 할 일이 없어요');
+    // Holidays of the month, listed under the calendar ("공휴일  3일 개천절 · 9일 한글날")
+    const mh = $('mHols');
+    mh.textContent = '';
+    mh.hidden = !hols.length;
+    if (hols.length) {
+      mh.append('공휴일  ');
+      hols.forEach(([n, name], k) => {
+        const b = document.createElement('b');
+        b.textContent = n + '일';
+        mh.append(k ? ' · ' : '', b, ' ' + name);
+      });
+    }
   }
   function shiftMonth(n) {
     const d = parseYmd(viewDate);
@@ -2030,8 +2150,23 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     viewDate = s;
     render();
   }
+  // Week view opens with the chosen day (usually today) at the top of the screen; earlier days are above it.
+  function scrollWeekToDay() {
+    const i = dayDiff(viewDate, mondayOf(viewDate));
+    const list = $('weekList');
+    list.style.paddingBottom = '';
+    const top = i > 0 ? weekSecs[i].sec.getBoundingClientRect().top + window.scrollY - 12 : 0;
+    // Near the end of the week the page is too short to bring the day up, so leave room below.
+    const short = top - (document.documentElement.scrollHeight - window.innerHeight);
+    if (short > 0) list.style.paddingBottom = short + 'px';
+    window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
+  }
   document.querySelectorAll('.tab').forEach((tab) => {
-    tab.addEventListener('click', () => { setView(tab.dataset.view); render(); });
+    tab.addEventListener('click', () => {
+      setView(tab.dataset.view);
+      render();
+      if (view === 'week') scrollWeekToDay();
+    });
     tab.addEventListener('keydown', (e) => {
       const order = ['day', 'week', 'month'];
       const i = order.indexOf(view);
@@ -2960,6 +3095,83 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   $('prefDone').addEventListener('click', () => prefSheet.close());
   prefSheet.addEventListener('click', (e) => { if (e.target === prefSheet) prefSheet.close(); });
 
+  /* ---------- sheets: the page behind stays put; pull a sheet down from its top to close it ---------- */
+  const allSheets = ['sheet', 'prefSheet', 'alarmSheet', 'addSheet', 'ringSheet'].map($);
+  let lockY = null;
+  function syncPageLock() {
+    const anyOpen = allSheets.some((d) => d.open);
+    if (anyOpen && lockY === null) {
+      lockY = window.scrollY;
+      document.body.style.top = -lockY + 'px';
+      document.body.classList.add('is-locked');
+    } else if (!anyOpen && lockY !== null) {
+      document.body.classList.remove('is-locked');
+      document.body.style.top = '';
+      window.scrollTo({ top: lockY, behavior: 'instant' });
+      lockY = null;
+    }
+  }
+  allSheets.forEach((d) => new MutationObserver(syncPageLock).observe(d, { attributes: true, attributeFilter: ['open'] }));
+
+  // The ringing alarm is left out: it must be answered with its buttons.
+  ['sheet', 'prefSheet', 'alarmSheet', 'addSheet'].map($).forEach((dlg) => {
+    const grip = document.createElement('div');
+    grip.className = 'sheet-grip';
+    grip.setAttribute('aria-hidden', 'true');
+    dlg.prepend(grip);
+    let p = null;
+    const begin = (x, y) => { p = { x, y, t: Date.now(), on: false, dy: 0 }; };
+    // Returns true once the gesture is a downward pull (then the caller stops the page from scrolling).
+    const move = (x, y) => {
+      if (!p) return false;
+      const dx = x - p.x, dy = y - p.y;
+      if (!p.on) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return false;
+        if (dy <= 0 || Math.abs(dx) > dy || dlg.scrollTop > 0) { p = null; return false; }
+        p.on = true;
+        dlg.classList.add('is-pulling');
+        const a = document.activeElement;
+        if (a && dlg.contains(a) && a.matches('input[type="text"]')) a.blur();
+      }
+      p.dy = Math.max(0, dy);
+      dlg.style.transform = 'translateY(' + p.dy + 'px)';
+      return true;
+    };
+    const end = () => {
+      if (!p) return;
+      const g = p;
+      p = null;
+      if (!g.on) return;
+      dlg.classList.remove('is-pulling');
+      const fast = g.dy > 40 && g.dy / Math.max(1, Date.now() - g.t) > 0.6;
+      if (fast || g.dy > Math.min(140, dlg.offsetHeight * 0.3)) {
+        dlg.style.transform = 'translateY(100%)';
+        setTimeout(() => { dlg.close(); dlg.style.transform = ''; }, 200);
+      } else {
+        dlg.style.transform = '';
+      }
+    };
+    // Touch: start anywhere while the sheet is scrolled to its top.
+    dlg.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1 || dlg.scrollTop > 0) { p = null; return; }
+      begin(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    dlg.addEventListener('touchmove', (e) => {
+      if (move(e.touches[0].clientX, e.touches[0].clientY)) e.preventDefault();
+    }, { passive: false });
+    dlg.addEventListener('touchend', end);
+    dlg.addEventListener('touchcancel', end);
+    // Mouse: drag the handle.
+    grip.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      begin(e.clientX, e.clientY);
+      const mm = (ev) => move(ev.clientX, ev.clientY);
+      const mu = () => { window.removeEventListener('mousemove', mm); window.removeEventListener('mouseup', mu); end(); };
+      window.addEventListener('mousemove', mm);
+      window.addEventListener('mouseup', mu);
+    });
+  });
+
   $('clearExamples').addEventListener('click', () => {
     closeOpenRow();
     tasks = tasks.filter((t) => !t.example);
@@ -2998,6 +3210,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   const moved = carryOver();
   loaded = true;
   render();
+  if (view === 'week') scrollWeekToDay();
   if (moved) toast('못 끝낸 일 ' + moved + '개를 오늘로 옮겼어요.');
   checkAlarms();
 })();
