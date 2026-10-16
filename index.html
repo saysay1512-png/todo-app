@@ -557,6 +557,18 @@ button.wday { width: 40px; padding: 0; justify-content: center; }
 
 /* Week */
 .wlist-days { display: flex; flex-direction: column; gap: 12px; }
+/* Week view: tabs, week title and progress bar stay on screen; only the seven days scroll, inside their own box. */
+.app.is-week { height: 100dvh; padding-bottom: 0; }
+.app.is-week #viewWeek { flex: 1; min-height: 0; }
+.app.is-week .wlist-days {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  margin-inline: -6px;
+  padding: 4px 6px calc(20px + env(safe-area-inset-bottom, 0px) + var(--extra, 0px));
+}
 .wsec { padding: 6px 12px 12px; }
 .wsec.is-sel { outline: 2px solid var(--pen); outline-offset: 0; }
 .whead {
@@ -2003,8 +2015,8 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   }
   $('weekList').addEventListener('click', onSmallCardClick);
   $('nextSec').addEventListener('click', onSmallCardClick);
-  $('wPrev').addEventListener('click', () => { viewDate = addDays(viewDate, -7); render(); });
-  $('wNext').addEventListener('click', () => { viewDate = addDays(viewDate, 7); render(); });
+  $('wPrev').addEventListener('click', () => { viewDate = addDays(viewDate, -7); render(); $('weekList').scrollTop = 0; });
+  $('wNext').addEventListener('click', () => { viewDate = addDays(viewDate, 7); render(); $('weekList').scrollTop = 0; });
   $('wThisWeek').addEventListener('click', () => { viewDate = todayStr; render(); scrollWeekToDay(); });
 
   /* ---------- month view ---------- */
@@ -2133,6 +2145,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     });
     $('viewDay').hidden = view !== 'day';
     $('viewWeek').hidden = view !== 'week';
+    $('app').classList.toggle('is-week', view === 'week');
     $('viewMonth').hidden = view !== 'month';
     if (view === 'day') renderDay();
     else if (view === 'week') renderWeek();
@@ -2154,12 +2167,13 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   function scrollWeekToDay() {
     const i = dayDiff(viewDate, mondayOf(viewDate));
     const list = $('weekList');
-    list.style.paddingBottom = '';
-    const top = i > 0 ? weekSecs[i].sec.getBoundingClientRect().top + window.scrollY - 12 : 0;
-    // Near the end of the week the page is too short to bring the day up, so leave room below.
-    const short = top - (document.documentElement.scrollHeight - window.innerHeight);
-    if (short > 0) list.style.paddingBottom = short + 'px';
-    window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    list.style.removeProperty('--extra');
+    const top = i > 0 ? weekSecs[i].sec.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop - 4 : 0;
+    // Near the end of the week the box is too short to bring the day up, so leave room below.
+    const short = top - (list.scrollHeight - list.clientHeight);
+    if (short > 0) list.style.setProperty('--extra', short + 'px');
+    list.scrollTop = Math.max(0, top);
   }
   document.querySelectorAll('.tab').forEach((tab) => {
     tab.addEventListener('click', () => {
