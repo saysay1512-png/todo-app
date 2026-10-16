@@ -807,8 +807,6 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
 .chapters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .chapter { height: 42px; border: 0; border-radius: 999px; background: none; color: var(--ink-soft); font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .chapter[aria-selected="true"] { background: var(--pen); color: var(--on-pen); font-weight: 700; }
-.ch-no { width: 22px; height: 22px; line-height: 22px; border-radius: 50%; font-size: 0.75rem; font-weight: 700; background: var(--pen-wash); color: var(--pen); }
-.chapter[aria-selected="true"] .ch-no { background: var(--on-pen); color: var(--pen); }
 .album-grid { gap: 4px; }
 .acell {
   --on-photo: #FFFFFF;
@@ -2363,10 +2361,7 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
     b.className = 'chapter';
     b.setAttribute('role', 'tab');
     b.dataset.ch = c.key;
-    const no = document.createElement('span');
-    no.className = 'ch-no';
-    no.textContent = c.key;
-    b.append(no, c.name);
+    b.textContent = c.name;
     b.addEventListener('click', () => {
       albumCh = c.key;
       try { localStorage.setItem(LS_ALBUM_CH, albumCh); } catch (e) { /* not remembered */ }
