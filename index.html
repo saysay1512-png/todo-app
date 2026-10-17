@@ -19,7 +19,7 @@
 (function () {
   var r = document.documentElement, s = 'mallang';
   try { s = localStorage.getItem('halil.skin') || s; } catch (e) { /* default skin */ }
-  if (['mallang', 'sticker', 'diary', 'jelly', 'night'].indexOf(s) < 0) s = 'mallang';
+  if (['mallang', 'peach', 'mint', 'cotton', 'sky', 'diary', 'night'].indexOf(s) < 0) s = 'mallang';
   r.setAttribute('data-skin', s);
   var mq = window.matchMedia('(prefers-color-scheme: dark)');
   function mode() {
@@ -31,7 +31,7 @@
 })();
 </script>
 <style>
-/* Five skins share one layout. A skin is only a set of the variables below, declared on
+/* Seven skins share one layout. A skin is only a set of the variables below, declared on
    [data-skin] so the picker can preview any skin inside a small tile. Every light block sets
    every variable; the dark block (selected by data-mode, set in the head script) overrides colours only.
    Kind colours keep their meaning in every skin: 일상 green, 중요 red, 외출 blue, 기타 purple.
@@ -61,32 +61,57 @@
   color-scheme: dark;
 }
 
-/* 2. 톡톡 스티커: yellow paper, thick outlines and hard offset shadows */
-[data-skin="sticker"] {
-  --paper: #FFF0A6; --paper-img: none; --sheet: #FFFFFF;
-  --ink: #1B1B1B; --ink-soft: #5A5444; --rule: #1B1B1B;
-  --pen: #FF6FAE; --on-pen: #1B1B1B; --pen-wash: #FFD3E7; --red: #C8233A;
-  --k-daily: #7EE0A0; --k-important: #FF8B8B; --k-out: #80BDFF; --k-etc: #C3A2FF;
-  --ki-daily: #1B1B1B; --ki-important: #1B1B1B; --ki-out: #1B1B1B; --ki-etc: #1B1B1B;
-  --kd-daily: #22B85E; --kd-important: #F04848; --kd-out: #2F8CFF; --kd-etc: #9161FF;
-  --k-exercise: #FFC27A; --ki-exercise: #1B1B1B; --kd-exercise: #FF9A2E;
-  --card-radius: 16px; --card-border: 2.5px solid #1B1B1B; --card-shadow: 4px 4px 0 #1B1B1B; --room: 0 5px 5px 0;
-  --box-radius: 18px; --box-border: 2.5px solid #1B1B1B; --box-shadow: 4px 4px 0 #1B1B1B;
-  --font-display: "Do Hyeon", "Malgun Gothic", sans-serif; --font-body: "Do Hyeon", "Malgun Gothic", sans-serif;
+/* 2. 복숭아 우유: peach milk paper, soft round cards with a warm glow */
+[data-skin="peach"] {
+  --paper: #FFF1EA; --paper-img: none; --sheet: #FFFFFF;
+  --ink: #4F3730; --ink-soft: #876759; --rule: #F6D9CC;
+  --pen: #C4553F; --on-pen: #FFFFFF; --pen-wash: #FFE2D7; --red: #C23A2C;
+  --k-daily: #D8F2DD; --k-important: #FFD6D2; --k-out: #D8E8FF; --k-etc: #ECE1FF;
+  --ki-daily: #22593A; --ki-important: #93302A; --ki-out: #244E8A; --ki-etc: #50379A;
+  --kd-daily: #4DB874; --kd-important: #F06A62; --kd-out: #5797EA; --kd-etc: #9C7CE6;
+  --k-exercise: #FFE4C6; --ki-exercise: #8A4A12; --kd-exercise: #F59E4C;
+  --card-radius: 20px; --card-border: 0 solid transparent; --card-shadow: 0 4px 12px rgba(232, 115, 90, 0.16); --room: 0 0 6px;
+  --box-radius: 22px; --box-border: 0 solid transparent; --box-shadow: 0 4px 14px rgba(232, 115, 90, 0.12);
+  --font-display: "Poor Story", "Malgun Gothic", sans-serif; --font-body: "Poor Story", "Malgun Gothic", sans-serif;
   --fs: 17px; --display-weight: 400; --body-weight: 400;
-  --act-set: #1B1B1B; --act-del: #C8233A; --on-act: #FFFFFF; --backdrop: rgba(27, 27, 27, 0.45);
+  --act-set: #6E534A; --act-del: #C23A2C; --on-act: #FFFFFF; --backdrop: rgba(79, 55, 48, 0.4);
   color-scheme: light;
 }
-[data-mode="dark"][data-skin="sticker"], [data-mode="dark"] [data-skin="sticker"] {
-  --paper: #25222D; --sheet: #34303F; --ink: #FFF5CC; --ink-soft: #CFC6A6; --rule: #FFE680;
-  --pen: #FF8CC0; --pen-wash: #4E2C40; --red: #FF8A96;
-  --card-border: 2.5px solid #FFE680; --card-shadow: 4px 4px 0 #FFE680;
-  --box-border: 2.5px solid #FFE680; --box-shadow: 4px 4px 0 #FFE680;
-  --act-set: #4A4558; --act-del: #B5283C; --backdrop: rgba(0, 0, 0, 0.6);
+[data-mode="dark"][data-skin="peach"], [data-mode="dark"] [data-skin="peach"] {
+  --paper: #2B201D; --sheet: #3A2C28; --ink: #FFEDE6; --ink-soft: #C9AA9F; --rule: #4E3B35;
+  --pen: #FFA48F; --on-pen: #2B201D; --pen-wash: #50322A; --red: #FF9283;
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.35); --box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  --act-set: #5A463F; --act-del: #B3392B; --backdrop: rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
 
-/* 3. 일기장: dotted notebook paper, handwriting, sticky notes held by tape */
+/* 3. 민트 사탕: mint paper with tiny dots, candy cards with a white rim, dashed boxes */
+[data-skin="mint"] {
+  --paper: #EEFAF5; --paper-img: radial-gradient(circle, #C8EADD 1.2px, transparent 1.7px); --sheet: #FFFFFF;
+  --ink: #23443D; --ink-soft: #577A72; --rule: #CDEBE0;
+  --pen: #1F806C; --on-pen: #FFFFFF; --pen-wash: #D6F3EA; --red: #C4354A;
+  --k-daily: #C9F0D6; --k-important: #FFD3D6; --k-out: #CFE6FF; --k-etc: #E4DCFF;
+  --ki-daily: #1B5534; --ki-important: #8E2A33; --ki-out: #1D4B85; --ki-etc: #4A3594;
+  --kd-daily: #36B26C; --kd-important: #EE5B67; --kd-out: #4C92E6; --kd-etc: #9277E2;
+  --k-exercise: #FFE3C4; --ki-exercise: #85460F; --kd-exercise: #F29A45;
+  --card-radius: 18px; --card-border: 2.5px solid #FFFFFF; --card-shadow: 0 3px 0 #BFE3D6; --room: 0 0 4px;
+  --box-radius: 20px; --box-border: 2px dashed #BCE4D6; --box-shadow: none;
+  --font-display: "Gamja Flower", "Malgun Gothic", cursive; --font-body: "Gamja Flower", "Malgun Gothic", cursive;
+  --fs: 18px; --display-weight: 400; --body-weight: 400;
+  --act-set: #3F6159; --act-del: #C4354A; --on-act: #FFFFFF; --backdrop: rgba(35, 68, 61, 0.4);
+  color-scheme: light;
+}
+[data-mode="dark"][data-skin="mint"], [data-mode="dark"] [data-skin="mint"] {
+  --paper: #172723; --paper-img: radial-gradient(circle, #2A433C 1.2px, transparent 1.7px); --sheet: #213530;
+  --ink: #E6FAF3; --ink-soft: #9DC2B8; --rule: #33504A;
+  --pen: #7FE0C4; --on-pen: #172723; --pen-wash: #23473F; --red: #FF8E9A;
+  --card-border: 2.5px solid #213530; --card-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+  --box-border: 2px dashed #3C5E56;
+  --act-set: #355550; --act-del: #B23446; --backdrop: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+/* 6. 일기장: dotted notebook paper, handwriting, sticky notes held by tape */
 [data-skin="diary"] {
   --paper: #FBF6EC; --paper-img: radial-gradient(circle, #E2D6C0 1px, transparent 1.4px); --sheet: #FFFDF7;
   --ink: #3E3229; --ink-soft: #7E6D5D; --rule: #E6DBC8;
@@ -113,32 +138,63 @@
   color-scheme: dark;
 }
 
-/* 4. 젤리: lavender paper, glossy candy-coloured cards */
-[data-skin="jelly"] {
-  --paper: #F4EEFF; --paper-img: none; --sheet: #FFFFFF;
-  --ink: #3A2E5C; --ink-soft: #685D8C; --rule: #E2D9F7;
-  --pen: #6B4CF0; --on-pen: #FFFFFF; --pen-wash: #EAE3FF; --red: #D3304B;
-  --k-daily: linear-gradient(165deg, #23A060, #167843); --k-important: linear-gradient(165deg, #E5464E, #B8252E);
-  --k-out: linear-gradient(165deg, #3A80EA, #1D52B8); --k-etc: linear-gradient(165deg, #8565F0, #5531C4);
-  --ki-daily: #FFFFFF; --ki-important: #FFFFFF; --ki-out: #FFFFFF; --ki-etc: #FFFFFF;
-  --kd-daily: #2BAE6C; --kd-important: #EF4D55; --kd-out: #3A86F5; --kd-etc: #8A63F5;
-  --k-exercise: linear-gradient(165deg, #D9741C, #AE520A); --ki-exercise: #FFFFFF; --kd-exercise: #F08A2C;
-  --card-radius: 26px; --card-border: 0 solid transparent; --card-shadow: 0 5px 0 rgba(70, 40, 160, 0.16); --room: 0 0 5px;
-  --box-radius: 26px; --box-border: 0 solid transparent; --box-shadow: 0 5px 0 rgba(70, 40, 160, 0.08);
-  --font-display: "Jua", "Malgun Gothic", sans-serif; --font-body: "Jua", "Malgun Gothic", sans-serif;
+/* 4. 솜사탕: pink and lilac sprinkles, very round puffy cards */
+[data-skin="cotton"] {
+  --paper: #FCF1FF;
+  --paper-img: radial-gradient(circle, #F5D3F0 1.7px, transparent 2.2px), radial-gradient(circle, #D9E2FF 1.7px, transparent 2.2px);
+  --sheet: #FFFFFF;
+  --ink: #4A3557; --ink-soft: #7E688B; --rule: #EED9F5;
+  --pen: #A9479E; --on-pen: #FFFFFF; --pen-wash: #F7E0F7; --red: #C43356;
+  --k-daily: #D2F3E0; --k-important: #FFD6E2; --k-out: #D9E5FF; --k-etc: #EADCFF;
+  --ki-daily: #1F5838; --ki-important: #922946; --ki-out: #29488A; --ki-etc: #533598;
+  --kd-daily: #45B97B; --kd-important: #F0618A; --kd-out: #6B95EE; --kd-etc: #A57BEB;
+  --k-exercise: #FFE4CC; --ki-exercise: #87481A; --kd-exercise: #F5A05A;
+  --card-radius: 28px; --card-border: 0 solid transparent; --card-shadow: 0 5px 0 rgba(169, 71, 158, 0.13); --room: 0 0 5px;
+  --box-radius: 28px; --box-border: 0 solid transparent; --box-shadow: 0 5px 0 rgba(169, 71, 158, 0.09);
+  --font-display: "Bagel Fat One", "Jua", "Malgun Gothic", sans-serif; --font-body: "Jua", "Malgun Gothic", sans-serif;
   --fs: 16px; --display-weight: 400; --body-weight: 400;
-  --act-set: #4B3F75; --act-del: #D3304B; --on-act: #FFFFFF; --backdrop: rgba(58, 46, 92, 0.4);
+  --act-set: #6A5576; --act-del: #C43356; --on-act: #FFFFFF; --backdrop: rgba(74, 53, 87, 0.4);
   color-scheme: light;
 }
-[data-mode="dark"][data-skin="jelly"], [data-mode="dark"] [data-skin="jelly"] {
-  --paper: #1C1730; --sheet: #28213F; --ink: #F1ECFF; --ink-soft: #ADA3CC; --rule: #3A3158;
-  --pen: #A58CFF; --on-pen: #1C1730; --pen-wash: #352A5C; --red: #FF8296;
+[data-mode="dark"][data-skin="cotton"], [data-mode="dark"] [data-skin="cotton"] {
+  --paper: #251C2C;
+  --paper-img: radial-gradient(circle, #46304F 1.7px, transparent 2.2px), radial-gradient(circle, #2F3556 1.7px, transparent 2.2px);
+  --sheet: #33283C; --ink: #FBEFFF; --ink-soft: #C3AECD; --rule: #4A3B55;
+  --pen: #F2A2E8; --on-pen: #251C2C; --pen-wash: #4A2C4C; --red: #FF8FAB;
   --card-shadow: 0 5px 0 rgba(0, 0, 0, 0.35); --box-shadow: 0 5px 0 rgba(0, 0, 0, 0.25);
-  --act-set: #463A6E; --act-del: #B82D45; --backdrop: rgba(0, 0, 0, 0.6);
+  --act-set: #554563; --act-del: #B3304F; --backdrop: rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
 
-/* 5. 별밤: always night, navy sky with stars, pastel cards like little lanterns */
+/* 5. 구름 하늘: pale blue sky with little white clouds */
+[data-skin="sky"] {
+  --paper: #E8F4FF;
+  --paper-img: radial-gradient(ellipse 30px 11px, #FFFFFF 96%, transparent 100%), radial-gradient(circle 11px, #FFFFFF 96%, transparent 100%);
+  --sheet: #FFFFFF;
+  --ink: #29405E; --ink-soft: #5F7695; --rule: #D3E5F7;
+  --pen: #3A73C2; --on-pen: #FFFFFF; --pen-wash: #DCEBFC; --red: #C4354A;
+  --k-daily: #D3F2DE; --k-important: #FFD8D8; --k-out: #D2E6FF; --k-etc: #E5DEFF;
+  --ki-daily: #1E5837; --ki-important: #922E2E; --ki-out: #1F4B86; --ki-etc: #4A3796;
+  --kd-daily: #42B574; --kd-important: #EF6262; --kd-out: #4C8FE8; --kd-etc: #8F7AE6;
+  --k-exercise: #FFE6C8; --ki-exercise: #85470F; --kd-exercise: #F4A04A;
+  --card-radius: 22px; --card-border: 0 solid transparent; --card-shadow: 0 4px 0 rgba(58, 115, 194, 0.13); --room: 0 0 4px;
+  --box-radius: 24px; --box-border: 0 solid transparent; --box-shadow: 0 4px 0 rgba(58, 115, 194, 0.1);
+  --font-display: "Jua", "Malgun Gothic", sans-serif; --font-body: "Gowun Dodum", "Malgun Gothic", sans-serif;
+  --fs: 16px; --display-weight: 400; --body-weight: 400;
+  --act-set: #4A5F7C; --act-del: #C4354A; --on-act: #FFFFFF; --backdrop: rgba(41, 64, 94, 0.4);
+  color-scheme: light;
+}
+[data-mode="dark"][data-skin="sky"], [data-mode="dark"] [data-skin="sky"] {
+  --paper: #18233A;
+  --paper-img: radial-gradient(ellipse 30px 11px, #22304D 96%, transparent 100%), radial-gradient(circle 11px, #22304D 96%, transparent 100%);
+  --sheet: #22304B; --ink: #EAF3FF; --ink-soft: #A3B6D3; --rule: #34466A;
+  --pen: #8DBBFF; --on-pen: #18233A; --pen-wash: #2B3F63; --red: #FF8E9A;
+  --card-shadow: 0 4px 0 rgba(0, 0, 0, 0.35); --box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25);
+  --act-set: #3C5075; --act-del: #B3334A; --backdrop: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+/* 7. 별밤: always night, navy sky with stars, pastel cards like little lanterns */
 [data-skin="night"] {
   --paper: #141A33;
   --paper-img: radial-gradient(circle, rgba(255, 255, 255, 0.5) 1px, transparent 1.5px), radial-gradient(circle, rgba(255, 255, 255, 0.28) 1px, transparent 1.5px);
@@ -179,6 +235,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 [data-skin="night"] body, body[data-skin="night"] { background-size: 46px 46px, 71px 71px; background-position: 0 0, 23px 31px; }
+[data-skin="cotton"] body { background-size: 30px 30px, 30px 30px; background-position: 0 0, 15px 15px; }
+/* a cloud = a flat ellipse plus a round bump on top, repeated far apart */
+[data-skin="sky"] body { background-size: 150px 120px, 150px 120px; background-position: 0 0, -9px -8px; }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--pen); outline-offset: 2px; }
@@ -541,19 +600,6 @@ button.wday { width: 40px; padding: 0; justify-content: center; }
   background: var(--tape);
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06);
 }
-[data-skin="jelly"] .card::after, .skin-prev[data-skin="jelly"] .pv::after {
-  content: "";
-  position: absolute;
-  left: 18px;
-  right: 45%;
-  top: 5px;
-  height: 9px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.32);
-  pointer-events: none;
-}
-[data-skin="jelly"] .card, [data-skin="jelly"] .witem { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18); }
-[data-skin="jelly"] .is-done .check svg { color: var(--kd); }
 
 .empty { margin: 0; padding: 20px 4px; color: var(--ink-soft); }
 .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; font-size: 0.8125rem; color: var(--ink-soft); }
@@ -877,8 +923,6 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   border-radius: min(var(--card-radius), 10px);
   white-space: nowrap;
 }
-.skin-prev[data-skin="sticker"] .pv { box-shadow: 2px 2px 0 var(--ink); }
-.skin-prev[data-skin="jelly"] .pv::after { left: 8px; top: 3px; height: 4px; }
 .skin-txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .skin-name { font-size: 1rem; }
 .skin-desc { font-size: 0.8125rem; color: var(--ink-soft); line-height: 1.4; }
@@ -1237,9 +1281,11 @@ button.chip:disabled { opacity: 0.35; cursor: default; }
   ];
   const SKINS = [
     { key: 'mallang', name: '말랑 마시멜로', desc: '크림색 바탕에 파스텔 카드. 둥글고 폭신해요.' },
-    { key: 'sticker', name: '톡톡 스티커', desc: '노란 바탕, 굵은 테두리. 스티커를 붙인 것처럼.' },
+    { key: 'peach', name: '복숭아 우유', desc: '말랑한 복숭아색에 포근한 손글씨. 은은하게 빛나는 카드.' },
+    { key: 'mint', name: '민트 사탕', desc: '민트색 점무늬 바탕, 하얀 테두리 사탕 카드.' },
+    { key: 'cotton', name: '솜사탕', desc: '분홍·보라 별사탕이 뿌려진 바탕에 통통한 제목 글씨.' },
+    { key: 'sky', name: '구름 하늘', desc: '하늘색 바탕에 뭉게구름이 둥실. 맑고 산뜻해요.' },
     { key: 'diary', name: '일기장', desc: '점 무늬 공책에 손글씨, 테이프로 붙인 메모지.' },
-    { key: 'jelly', name: '젤리', desc: '반짝이는 사탕 색 카드. 진하고 통통해요.' },
     { key: 'night', name: '별밤', desc: '별이 뜬 밤하늘에 은은한 카드. 늘 어두운 화면.' }
   ];
 

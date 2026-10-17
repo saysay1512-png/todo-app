@@ -9,10 +9,12 @@ const OUT = path.join(APP, 'fonts');
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 const FAMILIES = [
   ['Jua', 'jua', 'Jua'],
-  ['Do Hyeon', 'do-hyeon', 'Do+Hyeon'],
   ['Gaegu', 'gaegu', 'Gaegu:wght@400;700'],
   ['Hi Melody', 'hi-melody', 'Hi+Melody'],
-  ['Gowun Dodum', 'gowun-dodum', 'Gowun+Dodum']
+  ['Gowun Dodum', 'gowun-dodum', 'Gowun+Dodum'],
+  ['Poor Story', 'poor-story', 'Poor+Story'],
+  ['Bagel Fat One', 'bagel-fat-one', 'Bagel+Fat+One'],
+  ['Gamja Flower', 'gamja-flower', 'Gamja+Flower']
 ];
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
